@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formularios</title>
+    <style>
+        body {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            background-image: linear-gradient(to right, rgb(63, 104, 192), rgb(17, 54, 69));
+        }
+
+        .caixa {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            width: 40%;
+            color: white;
+
+        }
+
+        fieldset {
+            border: 3px solid dodgerblue;
+        }
+
+        legend {
+            border: 1px solid dodgerblue;
+            padding: 10px;
+            text-align: center;
+            background-color: dodgerblue;
+            border-radius: 5px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="caixa">
+        <form action="">
+            <fieldset>
+                <legend><b>Formulario Medico</b></legend>
+                <br>
+                <div class="input">
+                    <input type="text" nome="name" id="name" class="inputuname" required>
+                    <label for="nome">Nome Completo</label>
+                </div> <br>
+                <div class="input">
+                    <input type="text" nome="funcao" id="funcao" class="inputfuncao" required>
+                    <label for="funcao">Funcão</label>
+                </div> <br>
+                <div class="input">
+                    <input type="date" nome="data" id="data" class="inputdata" required>
+                    <label for="data">Data de Nascimento</label>
+                    <input type="date" nome="admissao" id="admissao" class="inputadmissao" required>
+                    <label for="data">Data de Admissão</label>
+                </div> <br>
+                <div class="input">
+                    <input type="number" nome="cpf" id="cpf" class="inputcpf" required>
+                    <label for="cpf">Nº Do CPF</label>
+                    <input type="number" nome="rg" id="rg" class="inputrg" required>
+                    <label for="cpf">Nº Do RG</label>
+                </div>
+                <p><b>Tipo de Exame Medico</b></p>
+                <input type="radio" id="Admissional" name="Exame" value="Admissional" required>
+                <label for="Admissional">Admissional</label>
+                <input type="radio" id="Demissional" name="Exame" value="Demissional" required>
+                <label for="Demissional">Demissional</label>
+                <input type="radio" id="Retorno" name="Exame" value="Retorno" required>
+                <label for="Retorno">Retorno ao trabalho</label>
+                <input type="radio" id="mudanca" name="Exame" value="mudanca" required>
+                <label for="mudanca">Mudança de Função</label>
+                <p><b>Audiometria</b></p>
+                <input type="radio" id="Sim" name="audio" value="Sim" required>
+                <label for="Sim">Sim</label>
+                <input type="radio" id="Nao" name="audio" value="Nao" required>
+                <label for="Nao">Não</label>
+                <p><b>Data Do atendimento e Hora:</b> </p>
+                <input type="datetime-local" nome="datadoexame" id="datadoexame" required>
+                <div class="input"> <br>
+                    <label for="msg">Obs:</label>
+                    <textarea id="msg"></textarea>
+                </div> <br>
+                <div>
+                    <input type="submit" name="submit" id="submit">
+                </div>
+        </form>
+    </div>
+    </fieldset>
+    </form>
+    </div>
+
+
+
+</body>
+
+</html>
