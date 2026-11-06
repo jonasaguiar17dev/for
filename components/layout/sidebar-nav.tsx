@@ -30,7 +30,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             <Icon className={cn("size-4 shrink-0", active ? "text-brand-red" : "text-sidebar-muted group-hover:text-white")} />
             <span className="flex-1">{item.label}</span>
             {item.soon && (
-              <span className="rounded-sm border border-sidebar-border px-1.5 py-px text-[9px] tracking-wider text-sidebar-muted uppercase">
+              <span className="rounded-sm border border-sidebar-border px-1.5 py-px text-[9px] whitespace-nowrap tracking-wider text-sidebar-muted uppercase">
                 Em breve
               </span>
             )}
