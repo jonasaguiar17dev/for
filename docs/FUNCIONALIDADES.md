@@ -1,0 +1,44 @@
+# Funcionalidades — primeira entrega
+
+## Autenticação
+- **Login** (`/login`) com e-mail e senha (Supabase Auth); validação no cliente e no servidor.
+- **Recuperação de senha** (`/recuperar-senha`) → e-mail com link → `/auth/confirm` → **nova senha**
+  (`/auth/redefinir-senha`, com política de senha forte).
+- **Convites**: usuários convidados pelo Supabase definem a senha pelo mesmo fluxo.
+- **Sair** pelo menu do usuário. Sessão renovada automaticamente pelo `proxy.ts`.
+
+## Configuração inicial (`/onboarding`)
+Usuário sem organização cadastra a organização e o CNPJ próprio (gestão interna) e se torna proprietário.
+
+## Dashboard (`/dashboard`)
+Indicadores reais (RPC `dashboard_summary`, respeitando o RLS):
+total de empresas cadastradas, clientes ativos, em implantação, suspensos e encerrados (cada cartão abre a
+listagem filtrada), gráficos por situação e por regime tributário e últimos clientes cadastrados.
+
+## Clientes (`/clientes`)
+- Tabela: razão social, nome fantasia, CNPJ, regime, responsável, situação e data de cadastro (cartões no
+  celular).
+- Pesquisa por nome (razão social/fantasia) ou CNPJ (com ou sem máscara), filtros por regime e situação,
+  paginação de 20 em 20 — tudo refletido na URL.
+- **Novo cliente** (`/clientes/novo`): empresa e CNPJ (consulta pública de CNPJ e CEP para pré-preencher),
+  regime tributário, CNAE, inscrições, situação cadastral, endereço, responsável, situação do cliente,
+  implantação, observações e contatos.
+- **Ficha** (`/clientes/[id]`): abas Dados cadastrais, Contatos, Documentos (envio/download/exclusão),
+  Acessos (vínculos pontuais) e Histórico de alterações.
+- **Edição** (`/clientes/[id]/editar`) e **exclusão** (somente proprietário/administrador, com confirmação
+  pelo CNPJ).
+- **Exportação CSV** da carteira.
+
+## Empresas (`/empresas`)
+Todos os CNPJs da organização, incluindo o interno, com filtro por situação cadastral (RFB).
+
+## Relatórios (`/relatorios`)
+Distribuição de clientes por situação e de empresas por regime tributário, e exportação CSV.
+
+## Configurações (`/configuracoes`)
+Nome da organização, perfil do usuário, inclusão de membros por e-mail, alteração de papel/status,
+remoção, e descrição dos papéis.
+
+## Em preparação (próximas etapas)
+Contratos, Financeiro e Contabilidade (DRE e Balanço) — apenas navegação e escopo planejado; nenhum dado
+simulado.
