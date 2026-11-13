@@ -46,3 +46,17 @@ Tipografia: **Geist Sans** (interface) e **Geist Mono** (identificadores), via `
 Entradas com `fade-up` curto, contagem dos números na primeira exibição, modais com escala suave e
 esqueletos de carregamento (`app/(app)/loading.tsx`). Tudo é desligado quando o sistema pede
 `prefers-reduced-motion`.
+
+## v0.4 — painel "vitrine"
+- **Menu lateral**: item ativo em pílula vermelha com brilho; brilho vermelho discreto ao fundo; seletor "Empresa atual".
+- **Topo**: busca global (Ctrl/⌘ + K) que encontra clientes, empresas (por nome ou CNPJ), contratos e módulos;
+  sino com as cobranças vencidas e as que vencem em até 7 dias.
+- **Dashboard**: banner de boas-vindas com ilustração própria (SVG gerado, sem imagens externas); cartões
+  financeiros com mini gráficos de tendência; faixa da carteira de clientes (os 5 indicadores da fundação);
+  gráfico com períodos 6 meses / 12 meses / no ano; ações rápidas; resumo por competência; próximos
+  vencimentos; indicadores em anel.
+- **Indicadores em anel** (período escolhido, vencimentos até hoje):
+  - Adimplência = valor vencido e recebido ÷ valor vencido;
+  - Inadimplência = valor vencido em aberto ÷ valor vencido;
+  - Retenção = contratos ativos ÷ contratos ativos, suspensos e encerrados.
+- Todas as séries vêm de `finance_summary` (migration `20261115000100`), calculadas sobre dados reais e sob RLS.

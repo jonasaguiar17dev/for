@@ -33,7 +33,7 @@ export function UserMenu({ email, role, activeOrgId, organizations }: Props) {
         className="flex cursor-pointer items-center gap-2 rounded-lg p-1 pr-1.5 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/30 sm:pr-2"
         aria-label="Menu do usuário"
       >
-        <span className="flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-[#2b2724] to-brand-graphite text-[11px] font-semibold text-white ring-2 ring-white">
+        <span className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-[#2b2724] to-brand-graphite text-xs font-semibold text-white ring-2 ring-white">
           {initials}
         </span>
         <span className="hidden text-left lg:block">

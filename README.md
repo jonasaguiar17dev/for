@@ -73,6 +73,7 @@ As migrations versionadas estão em `supabase/migrations/` e devem ser aplicadas
 | `20261106000500_storage.sql` | Bucket privado `client-documents` e políticas do Storage |
 | `20261113000100_contracts_finance.sql` | Catálogo de serviços, contratos, itens, contas a receber, faturamento e indicadores financeiros |
 | `20261114000100_dashboard_trends.sql` | Indicadores de tendência (novos clientes por mês, vencimentos em 7 dias) — somente leitura |
+| `20261115000100_dashboard_series.sql` | Séries mensais do dashboard (saldo, vencido, receita recorrente, adimplência) e próximos vencimentos — somente leitura |
 
 **Opção A — Supabase CLI (recomendado):**
 

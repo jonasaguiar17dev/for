@@ -1,118 +1,171 @@
 import {
   AlertTriangle,
-  ArrowRight,
-  Building2,
+  BarChart3,
   CalendarClock,
+  ChevronRight,
+  Building2,
   CircleCheck,
   CirclePause,
   CircleX,
-  HandCoins,
-  Plus,
+  Clock3,
+  FilePlus2,
+  LineChart,
+  Receipt,
   Repeat,
   Rocket,
+  Settings,
+  Target,
+  UserPlus,
+  Users,
+  Wallet,
+  Zap,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { BarList } from "@/components/charts/bar-list";
+import { Ring } from "@/components/charts/ring";
 import { TrendChart } from "@/components/charts/trend-chart";
-import { ContractStatusBadge } from "@/components/clients/status-badges";
+import { Hero } from "@/components/dashboard/hero";
 import { Delta, KpiCard, percentChange } from "@/components/dashboard/kpi-card";
-import { PageHeader } from "@/components/layout/page-header";
+import { UrlSelect } from "@/components/dashboard/url-select";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireOrgContext } from "@/lib/auth/session";
 import { can } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
 import { getDashboardSummary } from "@/services/dashboard";
 import { getFinanceSummary } from "@/services/finance";
-import { CONTRACT_STATUS_LABELS, CONTRACT_STATUSES, TAX_REGIME_LABELS, TAX_REGIMES } from "@/types/domain";
-import { formatCnpj } from "@/utils/cnpj";
-import { monthLabel } from "@/utils/dates";
-import { formatDate } from "@/utils/format";
+import type { FinanceMonth } from "@/types/database";
+import { formatISODate, monthLabel, todayISO } from "@/utils/dates";
 import { formatBRL } from "@/utils/money";
+import { receivableState } from "@/utils/receivable-state";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-const STATUS_COLOR = {
-  ativo: "var(--success)",
-  em_implantacao: "var(--info)",
-  suspenso: "var(--warning)",
-  encerrado: "var(--faint)",
-} as const;
+const PERIODS = { "6": "6 meses", "12": "12 meses", ano: "No ano" } as const;
+type Period = keyof typeof PERIODS;
+const MONTHS_LONG = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-function greeting() {
-  const h = Number(new Intl.DateTimeFormat("pt-BR", { hour: "numeric", hour12: false, timeZone: "America/Sao_Paulo" }).format(new Date()));
-  return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+function PanelHeader({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5">
+      <div className="min-w-0">
+        <h3 className="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-danger-soft text-primary">
+            <Icon className="size-4" />
+          </span>
+          {title}
+        </h3>
+        {description && <p className="mt-0.5 pl-[42px] text-[12.5px] text-muted-foreground">{description}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function SmallDelta({ value, inverse = false }: { value: number | null; inverse?: boolean }) {
+  if (value === null) return <span className="text-[11.5px] text-muted-foreground">sem base anterior</span>;
+  const flat = Math.abs(value) < 0.05;
+  const good = flat ? null : value > 0 !== inverse;
+  return (
+    <span
+      className={cn(
+        "num inline-flex w-fit items-center rounded-md px-1.5 py-0.5 text-[11.5px] font-medium",
+        good === null && "bg-neutral-soft text-neutral",
+        good === true && "bg-success-soft text-success",
+        good === false && "bg-danger-soft text-danger",
+      )}
+    >
+      {flat ? "—" : value > 0 ? "↗" : "↘"} {Math.abs(value).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
+    </span>
+  );
 }
 
 export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   const ctx = await requireOrgContext();
-  const [summary, finance] = await Promise.all([
+  const sp = await searchParams;
+  const period: Period = sp.periodo === "12" || sp.periodo === "ano" ? sp.periodo : "6";
+  const [finance, portfolio] = await Promise.all([
+    getFinanceSummary(ctx.organization.id, 12),
     getDashboardSummary(ctx.organization.id),
-    getFinanceSummary(ctx.organization.id),
   ]);
-  const { erro } = await searchParams;
-  const byStatus = (s: (typeof CONTRACT_STATUSES)[number]) => summary.clients_by_status[s] ?? 0;
-  const newClients = summary.new_clients_by_month ?? [];
-  const thisMonth = newClients.at(-1)?.count ?? 0;
-  const lastMonth = newClients.at(-2)?.count ?? 0;
-  const series = finance.received_by_month;
-  const recNow = series.at(-1)?.received ?? 0;
-  const recPrev = series.at(-2)?.received ?? 0;
-  const billedNow = series.at(-1)?.billed ?? 0;
-  const billedPrev = series.at(-2)?.billed ?? 0;
-  const regimes = TAX_REGIMES.map((r) => ({ label: TAX_REGIME_LABELS[r], value: summary.companies_by_regime[r] ?? 0, href: `/empresas?regime=${r}` }))
-    .filter((r) => r.value > 0)
-    .sort((a, b) => b.value - a.value);
+  const byStatus = (k: "ativo" | "em_implantacao" | "suspenso" | "encerrado") => portfolio.clients_by_status[k] ?? 0;
+
+  // Nome do usuário para a saudação.
+  const supabase = await createClient();
+  const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", ctx.user.id).maybeSingle();
+  const firstName = (profile?.full_name || ctx.user.email.split("@")[0]).split(" ")[0];
+
+  const all = finance.received_by_month;
+  const year = todayISO().slice(0, 4);
+  const shown: FinanceMonth[] = period === "6" ? all.slice(-6) : period === "12" ? all : all.filter((m) => m.month.startsWith(year));
+  const last6 = all.slice(-6);
+  const now = all.at(-1);
+  const prev = all.at(-2);
+
+  // Resumo por competência
+  const comps = [...all].reverse();
+  const compKey = typeof sp.competencia === "string" && comps.some((m) => m.month === sp.competencia) ? sp.competencia : comps[0]?.month;
+  const compIdx = comps.findIndex((m) => m.month === compKey);
+  const compNow = comps[compIdx];
+  const compPrev = comps[compIdx + 1];
+
+  // Indicadores estratégicos no período escolhido
+  const dueTotal = shown.reduce((a, m) => a + m.due_total, 0);
+  const duePaid = shown.reduce((a, m) => a + m.due_paid, 0);
+  const dueOpen = shown.reduce((a, m) => a + m.due_open, 0);
+  const adimplencia = dueTotal ? (duePaid / dueTotal) * 100 : null;
+  const inadimplencia = dueTotal ? (dueOpen / dueTotal) * 100 : null;
+  const retencao = finance.contracts_total ? (finance.active_contracts / finance.contracts_total) * 100 : null;
+
+  const canFin = can(ctx.role, "finance:write");
+  const today = todayISO();
+  const quick = [
+    canFin
+      ? { href: "/financeiro", label: "Nova cobrança", icon: Receipt }
+      : { href: "/financeiro", label: "Cobranças", icon: Receipt },
+    { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
+    { href: "/clientes", label: "Gerenciar clientes", icon: Users },
+    can(ctx.role, "company:create")
+      ? { href: "/clientes/novo", label: "Novo cliente", icon: UserPlus }
+      : { href: "/empresas", label: "Empresas", icon: Users },
+    canFin ? { href: "/contratos/novo", label: "Novo contrato", icon: FilePlus2 } : { href: "/contratos", label: "Contratos", icon: FilePlus2 },
+    { href: "/configuracoes", label: "Configurações", icon: Settings },
+  ];
 
   return (
     <>
-      <PageHeader
-        eyebrow={`${greeting()} · ${ctx.organization.name}`}
-        title="Visão geral"
-        description="Indicadores calculados em tempo real a partir dos dados que você pode acessar."
-        actions={
-          can(ctx.role, "company:create") && (
-            <Button asChild>
-              <Link href="/clientes/novo">
-                <Plus /> Novo cliente
-              </Link>
-            </Button>
-          )
-        }
-      />
-      {erro === "permissao" && (
-        <Alert variant="destructive" className="mb-6">
+      <Hero firstName={firstName} organizationName={ctx.organization.name} />
+      {sp.erro === "permissao" && (
+        <Alert variant="destructive" className="mb-4">
           Você não tem permissão para acessar aquela área.
         </Alert>
       )}
 
-      <section aria-label="Carteira de clientes" className="enter-stagger grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
-        <KpiCard
-          className="col-span-2 md:col-span-1"
-          label="Empresas cadastradas"
-          value={summary.total_companies}
-          icon={Building2}
-          tone="dark"
-          href="/empresas"
-          footer={<Delta dark value={percentChange(thisMonth, lastMonth)} label={`${thisMonth} novo(s) no mês`} />}
-        />
-        <KpiCard label="Clientes ativos" value={byStatus("ativo")} icon={CircleCheck} tone="success" href="/clientes?status=ativo" />
-        <KpiCard label="Em implantação" value={byStatus("em_implantacao")} icon={Rocket} tone="neutral" href="/clientes?status=em_implantacao" />
-        <KpiCard label="Suspensos" value={byStatus("suspenso")} icon={CirclePause} tone="warning" href="/clientes?status=suspenso" />
-        <KpiCard label="Encerrados" value={byStatus("encerrado")} icon={CircleX} tone="neutral" href="/clientes?status=encerrado" />
-      </section>
-
-      <section aria-label="Financeiro" className="enter-stagger mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:gap-4 xl:grid-cols-4">
+      <section aria-label="Indicadores financeiros" className="enter-stagger grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         <KpiCard
           label="A receber"
           value={finance.open_total}
           format="currency"
-          icon={CalendarClock}
+          icon={Wallet}
+          tone="dark"
           href="/financeiro?status=a_vencer"
-          footer={<span className="text-xs text-muted-foreground">{finance.open_count} cobrança(s) em aberto</span>}
+          footer={<span className="text-xs text-sidebar-muted">{finance.open_count} cobrança(s) em aberto</span>}
+          spark={last6.map((m) => m.open_end)}
+          sparkColor="#FF4D6A"
         />
         <KpiCard
           label="Vencido"
@@ -121,139 +174,206 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           icon={AlertTriangle}
           tone="danger"
           href="/financeiro?status=vencido"
-          footer={<span className="text-xs text-muted-foreground">{finance.overdue_count} cobrança(s) em atraso</span>}
+          footer={<Delta value={percentChange(finance.overdue_total, prev?.overdue_end ?? 0)} positiveIsGood={false} label={`${finance.overdue_count} em atraso`} />}
+          spark={last6.map((m) => m.overdue_end)}
+          sparkColor="#C8102E"
         />
         <KpiCard
           label="Recebido no mês"
-          value={recNow}
+          value={now?.received ?? 0}
           format="currency"
-          icon={HandCoins}
+          icon={CircleCheck}
           tone="success"
           href="/financeiro?status=pago"
-          footer={<Delta value={percentChange(recNow, recPrev)} />}
+          footer={<Delta value={percentChange(now?.received ?? 0, prev?.received ?? 0)} />}
+          spark={last6.map((m) => m.received)}
+          sparkColor="#15803D"
         />
         <KpiCard
-          label="Receita recorrente mensal"
+          label="Receita recorrente"
           value={finance.mrr}
           format="currency"
           icon={Repeat}
+          tone="violet"
           href="/contratos?status=ativo"
-          footer={<span className="text-xs text-muted-foreground">{finance.active_contracts} contrato(s) ativo(s)</span>}
+          footer={<Delta value={percentChange(finance.mrr, prev?.mrr ?? 0)} label={`${finance.active_contracts} contrato(s) ativo(s)`} />}
+          spark={last6.map((m) => m.mrr)}
+          sparkColor="#7C3AED"
         />
       </section>
 
-      <section className="mt-6 grid gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
-            <div>
-              <CardTitle>Faturado e recebido</CardTitle>
-              <CardDescription>Últimos 6 meses</CardDescription>
-            </div>
-            <div className="text-right">
-              <p className="num text-lg font-semibold tracking-tight">{formatBRL(billedNow)}</p>
-              <Delta value={percentChange(billedNow, billedPrev)} label="faturado vs. mês anterior" />
-            </div>
-          </CardHeader>
-          <CardContent>
+      <section aria-label="Carteira de clientes" className="mt-4">
+        <Card className="grid grid-cols-2 divide-border overflow-hidden rounded-2xl sm:grid-cols-3 lg:grid-cols-5 lg:divide-x">
+          {[
+            { label: "Empresas cadastradas", value: portfolio.total_companies, icon: Building2, href: "/empresas", cls: "bg-brand-graphite text-white" },
+            { label: "Clientes ativos", value: byStatus("ativo"), icon: CircleCheck, href: "/clientes?status=ativo", cls: "bg-success-soft text-success" },
+            { label: "Em implantação", value: byStatus("em_implantacao"), icon: Rocket, href: "/clientes?status=em_implantacao", cls: "bg-info-soft text-info" },
+            { label: "Suspensos", value: byStatus("suspenso"), icon: CirclePause, href: "/clientes?status=suspenso", cls: "bg-warning-soft text-warning" },
+            { label: "Encerrados", value: byStatus("encerrado"), icon: CircleX, href: "/clientes?status=encerrado", cls: "bg-neutral-soft text-neutral" },
+          ].map((i, idx) => (
+            <Link
+              key={i.label}
+              href={i.href}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-subtle/70",
+                idx === 0 && "col-span-2 sm:col-span-1",
+              )}
+            >
+              <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", i.cls)}>
+                <i.icon className="size-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="num block text-xl leading-tight font-semibold">{i.value.toLocaleString("pt-BR")}</span>
+                <span className="block truncate text-xs text-muted-foreground">{i.label}</span>
+              </span>
+            </Link>
+          ))}
+        </Card>
+      </section>
+
+      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,2.15fr)_minmax(0,1fr)]">
+        <Card className="rounded-2xl">
+          <PanelHeader
+            icon={LineChart}
+            title="Faturado e recebido"
+            description={`${PERIODS[period]} · faturado por competência e recebido pela data do pagamento`}
+            action={
+              <nav aria-label="Período" className="inline-flex gap-0.5 rounded-xl border border-border bg-subtle p-1">
+                {(Object.keys(PERIODS) as Period[]).map((p) => (
+                  <Link
+                    key={p}
+                    href={`/dashboard?periodo=${p}${compKey ? `&competencia=${compKey}` : ""}`}
+                    scroll={false}
+                    aria-current={p === period ? "true" : undefined}
+                    className={cn(
+                      "rounded-lg px-3 py-1.5 text-[12.5px] font-medium whitespace-nowrap transition-colors",
+                      p === period ? "bg-primary text-white shadow-[0_4px_10px_-4px_rgb(200_16_46/0.6)]" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {PERIODS[p]}
+                  </Link>
+                ))}
+              </nav>
+            }
+          />
+          <div className="p-5">
             <TrendChart
               caption="Faturado e recebido por mês"
               currency
+              variant="bar"
+              height={240}
               xKey="mes"
-              data={series.map((m) => ({ mes: monthLabel(m.month), faturado: m.billed, recebido: m.received }))}
+              data={shown.map((m) => ({ mes: monthLabel(m.month), faturado: m.billed, recebido: m.received }))}
               series={[
                 { key: "faturado", label: "Faturado", color: "var(--chart-1)" },
-                { key: "recebido", label: "Recebido", color: "var(--success)" },
+                { key: "recebido", label: "Recebido", color: "var(--chart-2)" },
               ]}
             />
-          </CardContent>
+          </div>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Clientes por situação</CardTitle>
-            <CardDescription>Relação contratual com o escritório</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BarList
-              items={CONTRACT_STATUSES.map((s) => ({
-                label: CONTRACT_STATUS_LABELS[s],
-                value: byStatus(s),
-                color: STATUS_COLOR[s],
-                href: `/clientes?status=${s}`,
-              }))}
-              emptyText="Nenhum cliente cadastrado ainda."
-            />
-          </CardContent>
+        <Card className="rounded-2xl">
+          <PanelHeader icon={Zap} title="Ações rápidas" description="Atalhos para as tarefas mais comuns" />
+          <div className="grid grid-cols-2 gap-2.5 p-5">
+            {quick.map((q) => (
+              <Link
+                key={q.label}
+                href={q.href}
+                className="flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card p-2.5 text-center text-[13px] font-medium transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px hover:border-border-strong hover:shadow-md"
+              >
+                <q.icon className="size-5 text-primary" />
+                {q.label}
+              </Link>
+            ))}
+          </div>
         </Card>
       </section>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        <Card>
-          <CardHeader className="flex-row flex-wrap items-start justify-between gap-2">
-            <div>
-              <CardTitle>Novos clientes</CardTitle>
-              <CardDescription>Cadastrados por mês</CardDescription>
-            </div>
-            <Delta value={percentChange(thisMonth, lastMonth)} label="no mês" />
-          </CardHeader>
-          <CardContent>
-            <TrendChart
-              caption="Novos clientes por mês"
-              variant="bar"
-              height={180}
-              xKey="mes"
-              data={newClients.map((m) => ({ mes: monthLabel(m.month), clientes: m.count }))}
-              series={[{ key: "clientes", label: "Novos clientes", color: "var(--chart-1)" }]}
-            />
-          </CardContent>
+        <Card className="rounded-2xl">
+          <PanelHeader
+            icon={Wallet}
+            title="Resumo financeiro"
+            description="Cobranças da competência"
+            action={
+              compKey && (
+                <div className="w-32">
+                <UrlSelect
+                  param="competencia"
+                  label="Competência"
+                  value={compKey}
+                  className="h-8 text-[13px]"
+                  options={comps.map((m) => ({ value: m.month, label: `${MONTHS_LONG[Number(m.month.slice(5, 7)) - 1]}/${m.month.slice(0, 4)}` }))}
+                />
+                </div>
+              )
+            }
+          />
+          <div className="grid grid-cols-1 gap-4 p-5 min-[420px]:grid-cols-3">
+            {[
+              { label: "Recebido", value: compNow?.comp_paid ?? 0, prev: compPrev?.comp_paid ?? 0, icon: CircleCheck, cls: "bg-success-soft text-success", inverse: false },
+              { label: "Pendente", value: compNow?.comp_open ?? 0, prev: compPrev?.comp_open ?? 0, icon: Clock3, cls: "bg-warning-soft text-warning", inverse: true },
+              { label: "Total faturado", value: compNow?.billed ?? 0, prev: compPrev?.billed ?? 0, icon: Receipt, cls: "bg-subtle text-foreground", inverse: false },
+            ].map((i) => (
+              <div key={i.label} className="grid min-w-0 gap-1">
+                <span className={cn("flex size-7 items-center justify-center rounded-lg", i.cls)}>
+                  <i.icon className="size-3.5" />
+                </span>
+                <span className="text-xs text-muted-foreground">{i.label}</span>
+                <span className="num truncate text-base font-semibold">{formatBRL(i.value)}</span>
+                <SmallDelta value={percentChange(i.value, i.prev)} inverse={i.inverse} />
+              </div>
+            ))}
+          </div>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Regime tributário</CardTitle>
-            <CardDescription>Empresas de clientes (sem o CNPJ interno)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BarList items={regimes} emptyText="Nenhuma empresa cadastrada ainda." />
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-2 xl:col-span-1">
-          <CardHeader className="flex-row items-center justify-between">
-            <div>
-              <CardTitle>Cadastrados recentemente</CardTitle>
-              <CardDescription>Últimos clientes</CardDescription>
-            </div>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/clientes">
-                Ver todos <ArrowRight />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="pt-3">
-            {summary.recent_clients.length === 0 ? (
-              <EmptyState icon={Building2} title="Nenhum cliente ainda" description="Os clientes cadastrados aparecem aqui." className="py-8" />
+
+        <Card className="rounded-2xl">
+          <PanelHeader
+            icon={CalendarClock}
+            title="Próximos vencimentos"
+            description="Cobranças em aberto"
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/financeiro?status=a_vencer">
+                  Ver todos <ChevronRight />
+                </Link>
+              </Button>
+            }
+          />
+          <div className="px-5 pt-2 pb-4">
+            {finance.upcoming.length === 0 ? (
+              <EmptyState icon={CalendarClock} title="Nenhum vencimento à frente" description="Cobranças em aberto aparecem aqui." className="py-8" />
             ) : (
-              <ul className="-mx-2 grid min-w-0">
-                {summary.recent_clients.map((c) => (
-                  <li key={c.company_id} className="min-w-0">
-                    <Link
-                      href={`/clientes/${c.company_id}`}
-                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-subtle"
-                    >
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-subtle text-xs font-semibold text-muted-foreground">
-                        {c.corporate_name.slice(0, 2).toUpperCase()}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">{c.corporate_name}</span>
-                        <span className="block font-mono text-[11px] text-muted-foreground">
-                          {formatCnpj(c.cnpj)} · {formatDate(c.created_at)}
+              <ul className="grid">
+                {finance.upcoming.slice(0, 5).map((r) => {
+                  const soon = receivableState("aberto", r.due_date, today) === "pendente";
+                  return (
+                    <li key={r.id} className="border-t border-border first:border-0">
+                      <Link
+                        href={`/clientes/${r.company_id}`}
+                        className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-1 py-2.5 text-[13px] hover:bg-subtle"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className={cn("size-2 rounded-full", soon ? "bg-warning" : "bg-faint")} />
+                          <span className="num text-muted-foreground">{formatISODate(r.due_date).slice(0, 5)}</span>
                         </span>
-                      </span>
-                      <ContractStatusBadge status={c.contract_status} />
-                    </Link>
-                  </li>
-                ))}
+                        <span className="truncate">{r.corporate_name}</span>
+                        <span className="num font-semibold">{formatBRL(r.amount)}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             )}
-          </CardContent>
+          </div>
+        </Card>
+
+        <Card className="rounded-2xl lg:col-span-2 xl:col-span-1">
+          <PanelHeader icon={Target} title="Indicadores estratégicos" description={`${PERIODS[period]} · vencimentos até hoje`} />
+          <div className="grid grid-cols-3 gap-2 p-5">
+            <Ring value={adimplencia} color="var(--success)" label="Adimplência" hint="vencido e recebido" title="Valor recebido ÷ valor que venceu no período" />
+            <Ring value={inadimplencia} color="var(--primary)" label="Inadimplência" hint="vencido em aberto" title="Valor vencido e ainda em aberto ÷ valor que venceu no período" />
+            <Ring value={retencao} color="var(--success)" label="Retenção" hint="contratos ativos" title="Contratos ativos ÷ contratos ativos, suspensos e encerrados" />
+          </div>
         </Card>
       </section>
     </>

@@ -153,21 +153,52 @@ export async function getContractDetail(id: string, organizationId: string): Pro
   };
 }
 
-export async function getFinanceSummary(organizationId: string): Promise<FinanceSummary> {
+export async function getFinanceSummary(organizationId: string, months = 6): Promise<FinanceSummary> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("finance_summary", { p_organization_id: organizationId, p_today: todayISO() });
+  const { data, error } = await supabase.rpc("finance_summary", {
+    p_organization_id: organizationId,
+    p_today: todayISO(),
+    p_months: months,
+  });
   if (error) throw new Error("Não foi possível carregar os indicadores financeiros.");
   const s = data as unknown as FinanceSummary;
+  const n = (v: unknown) => Number(v ?? 0);
   return {
     ...s,
-    open_total: Number(s.open_total),
-    overdue_total: Number(s.overdue_total),
-    due_soon_total: Number(s.due_soon_total ?? 0),
-    due_soon_count: Number(s.due_soon_count ?? 0),
-    month_billed: Number(s.month_billed),
-    month_received: Number(s.month_received),
-    mrr: Number(s.mrr),
-    received_by_month: s.received_by_month.map((m) => ({ ...m, billed: Number(m.billed), received: Number(m.received) })),
+    open_total: n(s.open_total),
+    overdue_total: n(s.overdue_total),
+    due_soon_total: n(s.due_soon_total),
+    due_soon_count: n(s.due_soon_count),
+    month_billed: n(s.month_billed),
+    month_received: n(s.month_received),
+    mrr: n(s.mrr),
+    contracts_total: n(s.contracts_total),
+    received_by_month: (s.received_by_month ?? []).map((m) => ({
+      month: m.month,
+      billed: n(m.billed),
+      received: n(m.received),
+      open_end: n(m.open_end),
+      overdue_end: n(m.overdue_end),
+      mrr: n(m.mrr),
+      comp_paid: n(m.comp_paid),
+      comp_open: n(m.comp_open),
+      due_total: n(m.due_total),
+      due_paid: n(m.due_paid),
+      due_open: n(m.due_open),
+    })),
+    upcoming: (s.upcoming ?? []).map((u) => ({ ...u, amount: n(u.amount) })),
+  };
+}
+
+/** Cobranças que pedem atenção (vencidas e a vencer em 7 dias) para o sino de notificações. */
+export async function getAttentionReceivables(organizationId: string) {
+  const [overdue, soon] = await Promise.all([
+    searchReceivables(organizationId, { status: "vencido" }),
+    searchReceivables(organizationId, { status: "vence_em_breve" }),
+  ]);
+  return {
+    total: overdue.total + soon.total,
+    items: [...overdue.rows, ...soon.rows].slice(0, 8),
   };
 }
 

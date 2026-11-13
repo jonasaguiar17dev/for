@@ -1,15 +1,27 @@
 "use client";
 
-import { CornerDownLeft, FilePlus2, Receipt, Search, UserPlus } from "lucide-react";
+import { Building2, CornerDownLeft, FilePlus2, FileSignature, Loader2, Receipt, Search, UserPlus, Users } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { globalSearch, type SearchHit } from "@/app/(app)/search-actions";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { cn } from "@/lib/utils";
 
 import { NAV_ITEMS } from "./nav-items";
 
-type Command = { id: string; label: string; group: string; href: string; icon: React.ComponentType<{ className?: string }>; keywords?: string };
+type Command = {
+  id: string;
+  label: string;
+  group: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  keywords?: string;
+  sub?: string;
+};
+
+const HIT_ICON = { client: Users, company: Building2, contract: FileSignature } as const;
 
 const ACTIONS: Command[] = [
   { id: "new-client", label: "Novo cliente", group: "Ações", href: "/clientes/novo", icon: UserPlus, keywords: "cadastrar empresa cnpj" },
@@ -25,7 +37,19 @@ export function CommandMenu() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [searching, setSearching] = useState(false);
   const listRef = useRef<HTMLUListElement>(null);
+  const searchRecords = useDebouncedCallback(async (value: string) => {
+    if (value.trim().length < 2) {
+      setHits([]);
+      setSearching(false);
+      return;
+    }
+    const found = await globalSearch(value);
+    setHits(found);
+    setSearching(false);
+  }, 250);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -47,12 +71,17 @@ export function CommandMenu() {
   );
   const results = useMemo(() => {
     const q = normalize(query.trim());
-    return q ? commands.filter((c) => normalize(`${c.label} ${c.keywords ?? ""}`).includes(q)) : commands;
-  }, [commands, query]);
+    const nav = q ? commands.filter((c) => normalize(`${c.label} ${c.keywords ?? ""}`).includes(q)) : commands;
+    const records: Command[] = q
+      ? hits.map((h) => ({ id: h.href, label: h.label, sub: h.sub, group: h.group, href: h.href, icon: HIT_ICON[h.kind] }))
+      : [];
+    return [...nav, ...records];
+  }, [commands, query, hits]);
 
   const run = (c: Command) => {
     setOpen(false);
     setQuery("");
+    setHits([]);
     router.push(c.href);
   };
 
@@ -63,17 +92,17 @@ export function CommandMenu() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group hidden h-9 w-full max-w-xs cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:border-border-strong md:flex"
+        className="group hidden h-10 w-full max-w-lg cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-card px-3.5 text-sm text-muted-foreground shadow-sm transition-colors hover:border-border-strong md:flex"
       >
         <Search className="size-4" />
-        <span className="flex-1 text-left">Buscar ou ir para…</span>
+        <span className="flex-1 truncate text-left">Buscar por cliente, empresa, contrato…</span>
         <kbd className="rounded border border-border bg-subtle px-1.5 font-mono text-[10.5px] text-muted-foreground">Ctrl K</kbd>
       </button>
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Buscar"
-        className="flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-accent md:hidden"
+        className="flex size-10 cursor-pointer items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-xs hover:bg-subtle md:hidden"
       >
         <Search className="size-[18px]" />
       </button>
@@ -100,6 +129,8 @@ export function CommandMenu() {
                 onChange={(e) => {
                   setQuery(e.target.value);
                   setIndex(0);
+                  setSearching(e.target.value.trim().length >= 2);
+                  searchRecords(e.target.value);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "ArrowDown") {
@@ -113,10 +144,11 @@ export function CommandMenu() {
                     run(results[index]);
                   }
                 }}
-                placeholder="Digite um módulo ou ação…"
+                placeholder="Buscar cliente, empresa, CNPJ, contrato ou módulo…"
                 aria-label="Buscar comando"
                 className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-faint"
               />
+              {searching && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
               <kbd className="rounded border border-border bg-subtle px-1.5 font-mono text-[10.5px] text-muted-foreground">Esc</kbd>
             </div>
             <ul ref={listRef} role="listbox" className="scroll-thin max-h-80 overflow-y-auto p-2">
@@ -143,7 +175,8 @@ export function CommandMenu() {
                             )}
                           >
                             <Icon className="size-4 text-muted-foreground" />
-                            <span className="flex-1">{c.label}</span>
+                            <span className="min-w-0 flex-1 truncate">{c.label}</span>
+                            {c.sub && <span className="hidden max-w-48 truncate font-mono text-[11px] text-muted-foreground sm:block">{c.sub}</span>}
                             {i === index && <CornerDownLeft className="size-3.5 text-muted-foreground" />}
                           </li>
                         );

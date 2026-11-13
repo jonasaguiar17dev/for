@@ -34,7 +34,7 @@ export function AppShell({
       <div
         className={cn(
           "min-h-dvh lg:grid lg:transition-[grid-template-columns] lg:duration-200 lg:ease-out",
-          collapsed ? "lg:grid-cols-[68px_minmax(0,1fr)]" : "lg:grid-cols-[248px_minmax(0,1fr)]",
+          collapsed ? "lg:grid-cols-[68px_minmax(0,1fr)]" : "lg:grid-cols-[264px_minmax(0,1fr)]",
         )}
       >
         <aside className="sticky top-0 hidden h-dvh lg:block" aria-label="Navegação">

@@ -158,6 +158,22 @@ describeDb("Contratos e financeiro", () => {
     expect(r.soon).toBe(1);
   });
 
+  it("devolve séries mensais para o dashboard", async () => {
+    const s = await asUser(U.owner, async (c) => (await c.query("select public.finance_summary($1, '2027-02-20', 3) s", [org])).rows[0].s);
+    expect(s.received_by_month.map((m: { month: string }) => m.month)).toEqual(["2026-12", "2027-01", "2027-02"]);
+    const jan = s.received_by_month[1];
+    expect(Number(jan.billed)).toBe(2486.5);
+    expect(Number(jan.comp_paid)).toBe(2486.5);
+    expect(Number(jan.open_end)).toBe(0); // pago em 12/01
+    const feb = s.received_by_month[2];
+    expect(Number(feb.overdue_end)).toBe(986.5); // venceu em 10/02 e segue aberto em 20/02
+    expect(Number(feb.due_total)).toBe(986.5);
+    expect(Number(feb.due_open)).toBe(986.5);
+    expect(Number(feb.mrr)).toBe(986.5);
+    expect(s.contracts_total).toBe(1); // o rascunho não conta
+    expect(s.upcoming).toEqual([]);
+  });
+
   it("pesquisa cobranças por situação derivada (vencido / a vencer)", async () => {
     const r = await asUser(U.owner, async (c) => ({
       overdue: (await c.query("select id from public.search_receivables($1, null, 'vencido', null, null, '2027-02-20')", [org])).rowCount,

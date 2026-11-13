@@ -244,7 +244,23 @@ export type FinanceSummary = {
   month_received: number;
   active_contracts: number;
   mrr: number;
-  received_by_month: { month: string; billed: number; received: number }[];
+  contracts_total: number;
+  received_by_month: FinanceMonth[];
+  upcoming: { id: string; company_id: string; corporate_name: string; description: string; due_date: string; amount: number }[];
+};
+
+export type FinanceMonth = {
+  month: string;
+  billed: number;
+  received: number;
+  open_end: number;
+  overdue_end: number;
+  mrr: number;
+  comp_paid: number;
+  comp_open: number;
+  due_total: number;
+  due_paid: number;
+  due_open: number;
 };
 
 export type Database = {
@@ -342,7 +358,7 @@ export type Database = {
         Returns: number;
       };
       finance_summary: {
-        Args: { p_organization_id: string; p_today?: string };
+        Args: { p_organization_id: string; p_today?: string; p_months?: number };
         Returns: Json;
       };
       search_receivables: {

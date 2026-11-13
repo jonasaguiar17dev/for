@@ -14,7 +14,7 @@ export function MobileNav({ organizationName }: { organizationName: string }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="-ml-2 lg:hidden" aria-label="Abrir menu">
+        <Button variant="outline" size="icon" className="size-10 rounded-xl lg:hidden" aria-label="Abrir menu">
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
@@ -24,7 +24,7 @@ export function MobileNav({ organizationName }: { organizationName: string }) {
           <Logo tone="light" />
         </div>
         <div className="mx-3 mb-3 rounded-lg border border-sidebar-border bg-sidebar-elevated px-3 py-2">
-          <p className="text-[10px] tracking-wide text-sidebar-muted uppercase">Organização</p>
+          <p className="text-[10px] tracking-wide text-sidebar-muted uppercase">Empresa atual</p>
           <p className="truncate text-[13px] font-medium text-white">{organizationName}</p>
         </div>
         <div className="scroll-thin flex-1 overflow-y-auto px-3 pb-6">

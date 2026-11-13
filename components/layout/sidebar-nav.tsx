@@ -11,13 +11,12 @@ import { NAV_GROUPS } from "./nav-items";
 export function SidebarNav({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Menu principal" className="flex flex-col gap-5">
+    <nav aria-label="Menu principal" className="flex flex-col gap-3">
       {NAV_GROUPS.map((group) => (
         <div key={group.label} className="flex flex-col gap-0.5">
           <p
             className={cn(
-              "mb-1 px-3 text-[10.5px] font-medium tracking-[0.08em] text-sidebar-muted/80 uppercase transition-opacity duration-200",
-              collapsed && "pointer-events-none h-0 overflow-hidden opacity-0 mb-0",
+              "sr-only",
             )}
           >
             {group.label}
@@ -33,22 +32,15 @@ export function SidebarNav({ collapsed = false, onNavigate }: { collapsed?: bool
                   aria-current={active ? "page" : undefined}
                   aria-label={collapsed ? item.label : undefined}
                   className={cn(
-                    "group relative flex h-9 items-center gap-3 rounded-lg px-3 text-[13.5px] font-medium text-sidebar-foreground/75 transition-colors duration-150 hover:bg-sidebar-accent hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none",
-                    active && "bg-sidebar-accent text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.04)]",
+                    "group relative flex h-11 items-center gap-3 rounded-xl px-3.5 text-[14px] font-medium text-sidebar-foreground/80 transition-[background-color,color,box-shadow] duration-150 hover:bg-sidebar-accent hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none",
+                    active &&
+                      "bg-gradient-to-br from-[#d3163a] to-[#a70d26] text-white shadow-[0_8px_20px_-6px_rgb(200_16_46/0.55),inset_0_1px_0_rgb(255_255_255/0.18)] hover:bg-transparent",
                     collapsed && "justify-center px-0",
                   )}
                 >
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "absolute top-2 bottom-2 left-0 w-[3px] rounded-r-full bg-brand-red transition-opacity duration-200",
-                      active ? "opacity-100" : "opacity-0",
-                      collapsed && "-left-2",
-                    )}
-                  />
                   <Icon
                     className={cn(
-                      "size-[17px] shrink-0 transition-colors",
+                      "size-[18px] shrink-0 transition-colors",
                       active ? "text-white" : "text-sidebar-muted group-hover:text-sidebar-foreground",
                     )}
                     strokeWidth={1.9}

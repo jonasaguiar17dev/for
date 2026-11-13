@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarClock, Clock3, HandCoins, Repeat } from "lucide-react";
+import { AlertTriangle, Clock3, HandCoins, Repeat, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 
 import { TrendChart } from "@/components/charts/trend-chart";
@@ -64,15 +64,17 @@ export default async function FinancePage({ searchParams }: PageProps<"/financei
         actions={canWrite && <FinanceToolbar clients={clients} />}
       />
 
-      <section aria-label="Indicadores financeiros" className="enter-stagger grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-5">
+      <section aria-label="Indicadores financeiros" className="enter-stagger grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-5">
         <KpiCard
           label="A receber"
           value={summary.open_total}
           format="currency"
-          icon={CalendarClock}
+          icon={Wallet}
           tone="neutral"
           href="/financeiro?status=a_vencer"
           footer={<span className="text-xs text-muted-foreground">{summary.open_count} cobrança(s) em aberto</span>}
+          spark={series.map((m) => m.open_end)}
+          sparkColor="#57534E"
         />
         <KpiCard
           label="Vence em 7 dias"
@@ -91,6 +93,8 @@ export default async function FinancePage({ searchParams }: PageProps<"/financei
           tone="danger"
           href="/financeiro?status=vencido"
           footer={<span className="text-xs text-muted-foreground">{summary.overdue_count} cobrança(s) em atraso</span>}
+          spark={series.map((m) => m.overdue_end)}
+          sparkColor="#C8102E"
         />
         <KpiCard
           label="Recebido no mês"
@@ -100,6 +104,8 @@ export default async function FinancePage({ searchParams }: PageProps<"/financei
           tone="success"
           href="/financeiro?status=pago"
           footer={<Delta value={percentChange(recNow, recPrev)} />}
+          spark={series.map((m) => m.received)}
+          sparkColor="#15803D"
         />
         <KpiCard
           className="col-span-2 lg:col-span-1"
@@ -110,6 +116,8 @@ export default async function FinancePage({ searchParams }: PageProps<"/financei
           tone="dark"
           href="/contratos?status=ativo"
           footer={<span className="text-xs text-sidebar-muted">{summary.active_contracts} contrato(s) ativo(s)</span>}
+          spark={series.map((m) => m.mrr)}
+          sparkColor="#FF4D6A"
         />
       </section>
 
@@ -128,7 +136,7 @@ export default async function FinancePage({ searchParams }: PageProps<"/financei
               data={series.map((m) => ({ mes: monthLabel(m.month), faturado: m.billed, recebido: m.received }))}
               series={[
                 { key: "faturado", label: "Faturado", color: "var(--chart-1)" },
-                { key: "recebido", label: "Recebido", color: "var(--success)" },
+                { key: "recebido", label: "Recebido", color: "var(--chart-2)" },
               ]}
             />
           </CardContent>

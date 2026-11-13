@@ -28,21 +28,18 @@ export function Logo({
         <div className="min-w-0 leading-none">
           <p
             className={cn(
-              "flex items-center gap-1.5 text-[15px] font-semibold tracking-tight",
+              "flex items-center gap-1.5 text-[16px] font-bold tracking-[0.02em] uppercase",
               tone === "light" ? "text-white" : "text-brand-graphite",
             )}
           >
-            Aguiar
-            <span
-              className={cn(
-                "rounded-[5px] px-1 py-px font-mono text-[10px] font-medium tracking-wider",
-                tone === "light" ? "bg-white/10 text-sidebar-foreground" : "bg-brand-graphite text-white",
-              )}
-            >
-              ERP
-            </span>
+            Aguiar <span className="text-brand-red">ERP</span>
           </p>
-          <p className={cn("mt-1 truncate text-[11px]", tone === "light" ? "text-sidebar-muted" : "text-muted-foreground")}>
+          <p
+            className={cn(
+              "mt-1 truncate text-[9.5px] tracking-[0.14em] uppercase",
+              tone === "light" ? "text-sidebar-muted" : "text-muted-foreground",
+            )}
+          >
             Contabilidade &amp; Gestão
           </p>
         </div>
