@@ -323,6 +323,22 @@ export type TrialBalanceRow = {
   closing: number;
 };
 
+export type TaxAssessmentRow = {
+  id: string;
+  organization_id: string;
+  company_id: string;
+  competence: string;
+  regime: "simples_nacional" | "lucro_presumido";
+  inputs: Json;
+  result: Json;
+  total: number;
+  due_date: string | null;
+  entry_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -373,6 +389,11 @@ export type Database = {
       journal_lines: Table<
         JournalLineRow,
         Pick<JournalLineRow, "entry_id" | "company_id" | "account_id"> & Partial<JournalLineRow>
+      >;
+      tax_assessments: Table<
+        TaxAssessmentRow,
+        Pick<TaxAssessmentRow, "organization_id" | "company_id" | "competence" | "regime" | "inputs" | "result" | "total"> &
+          Partial<TaxAssessmentRow>
       >;
       accounting_settings: Table<
         AccountingSettingsRow,

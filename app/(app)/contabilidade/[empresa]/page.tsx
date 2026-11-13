@@ -9,6 +9,7 @@ import { ClosingPanel } from "@/components/accounting/closing-panel";
 import { EntryActions } from "@/components/accounting/entry-actions";
 import { BalanceSheetView, DreView, TrialBalanceTable } from "@/components/accounting/reports";
 import { SetupChartButton } from "@/components/accounting/setup-chart";
+import { TaxPanel, type TaxFormState } from "@/components/accounting/tax-panel";
 import { UrlSelect } from "@/components/dashboard/url-select";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -24,14 +25,16 @@ import {
   ENTRIES_LIMIT,
   getAccountingCompany,
   getLedger,
+  getTaxSuggestion,
   getTrialBalance,
   listAccounts,
   listEntries,
+  listTaxAssessments,
 } from "@/services/accounting";
 import { buildBalanceSheet, buildDre } from "@/utils/accounting";
 import { formatCnpj } from "@/utils/cnpj";
 import { formatISODate, todayISO } from "@/utils/dates";
-import { formatBRL } from "@/utils/money";
+import { formatBRL, formatMoneyInput } from "@/utils/money";
 
 export const metadata: Metadata = { title: "Contabilidade" };
 
@@ -131,7 +134,7 @@ export default async function CompanyAccountingPage({ params, searchParams }: Pa
       <Card className="overflow-hidden">
         <div className="grid gap-3 border-b border-border p-4">
           <AccountingNav base={base} current={tab} keep={keep} />
-          {tab !== "plano" && tab !== "fechamento" && (
+          {tab !== "plano" && tab !== "fechamento" && tab !== "impostos" && (
             <PeriodForm base={base} tab={tab} from={period.from} to={period.to} extra={tab === "razao" && str(sp.conta) ? { conta: str(sp.conta)! } : undefined} />
           )}
         </div>
@@ -150,6 +153,15 @@ export default async function CompanyAccountingPage({ params, searchParams }: Pa
             trial={trial}
           />
         )}
+        {tab === "impostos" && (
+          <TaxTab
+            companyId={company.id}
+            regime={company.tax_regime}
+            competence={str(sp.competencia)}
+            canWrite={canWrite}
+            closedUntil={company.closed_until}
+          />
+        )}
         {tab === "fechamento" && (
           <ClosingPanel
             companyId={company.id}
@@ -161,6 +173,93 @@ export default async function CompanyAccountingPage({ params, searchParams }: Pa
         )}
       </Card>
     </>
+  );
+}
+
+const centsField = (c: number) => (c ? formatMoneyInput(c / 100) : "");
+
+async function TaxTab({
+  companyId,
+  regime,
+  competence: raw,
+  canWrite,
+  closedUntil,
+}: {
+  companyId: string;
+  regime: string;
+  competence?: string;
+  canWrite: boolean;
+  closedUntil: string | null;
+}) {
+  const prev = lastDayOfPreviousMonth(todayISO()).slice(0, 7);
+  const competence = raw && /^\d{4}-(0[1-9]|1[0-2])$/.test(raw) ? raw : prev;
+  const [s, history] = await Promise.all([getTaxSuggestion(companyId, `${competence}-01`), listTaxAssessments(companyId)]);
+  const saved = history.find((h) => h.competence.slice(0, 7) === competence) ?? null;
+  const defaultRegime = regime === "lucro_presumido" ? "lucro_presumido" : "simples_nacional";
+  const simples = [
+    ...(s.salesMonth ? [{ annex: "I" as const, revenue: centsField(s.salesMonth) }] : []),
+    ...(s.servicesMonth || !s.salesMonth ? [{ annex: "III" as const, revenue: centsField(s.servicesMonth) }] : []),
+  ];
+  const presumido = [
+    ...(s.salesMonth ? [{ activity: "comercio_industria", revenue: centsField(s.salesMonth), quarter_revenue: centsField(s.salesQuarter) }] : []),
+    ...(s.servicesMonth || !s.salesMonth
+      ? [{ activity: "servicos", revenue: centsField(s.servicesMonth), quarter_revenue: centsField(s.servicesQuarter) }]
+      : []),
+  ];
+  const suggested: TaxFormState = {
+    regime: defaultRegime,
+    rbt12: centsField(s.rbt12),
+    payroll12: centsField(s.payroll12),
+    simples,
+    iss_rate: "5",
+    presumido,
+  };
+  // Apuração já salva: reabre com os dados usados nela.
+  let initial = suggested;
+  if (saved) {
+    const inp = saved.inputs as Record<string, unknown>;
+    const acts = (inp.activities as Record<string, number | string>[]) ?? [];
+    initial =
+      saved.regime === "simples_nacional"
+        ? {
+            ...suggested,
+            regime: saved.regime,
+            rbt12: centsField(Number(inp.rbt12)),
+            payroll12: centsField(Number(inp.payroll12)),
+            simples: acts.map((a) => ({ annex: a.annex as TaxFormState["simples"][number]["annex"], revenue: centsField(Number(a.revenue)) })),
+          }
+        : {
+            ...suggested,
+            regime: saved.regime,
+            iss_rate: String(inp.iss_rate ?? "").replace(".", ","),
+            presumido: acts.map((a) => ({
+              activity: String(a.activity),
+              revenue: centsField(Number(a.revenue)),
+              quarter_revenue: centsField(Number(a.quarter_revenue)),
+            })),
+          };
+  }
+  const hint =
+    regime === "mei"
+      ? "Empresa cadastrada como MEI: o DAS-MEI é um valor fixo mensal e não é calculado aqui."
+      : regime === "lucro_real"
+        ? "Empresa cadastrada no Lucro Real: esta tela apura apenas Simples Nacional e Lucro Presumido."
+        : s.monthsWithRevenue > 0 && s.monthsWithRevenue < 12
+          ? `A escrituração tem lançamentos em ${s.monthsWithRevenue} dos 12 meses anteriores. Se a empresa está no 1º ano de atividade, o RBT12 deve ser proporcionalizado (média mensal × 12).`
+          : null;
+  return (
+    <TaxPanel
+      key={competence}
+      companyId={companyId}
+      competence={competence}
+      initial={initial}
+      suggested={suggested}
+      saved={saved}
+      history={history}
+      canWrite={canWrite}
+      closedUntil={closedUntil}
+      hint={hint}
+    />
   );
 }
 

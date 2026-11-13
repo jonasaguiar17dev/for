@@ -7,8 +7,11 @@ import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { accountSchema, closePeriodSchema, journalEntrySchema } from "@/schemas/accounting";
 import { uuidSchema } from "@/schemas/common";
+import { taxFormSchema } from "@/schemas/taxes";
+import type { Json } from "@/types/database";
 import type { ActionResult } from "@/types/domain";
 import { parentCode } from "@/utils/accounting";
+import { dasDueDate, lastDayOf, runTaxCalc, taxPostingLines } from "@/utils/taxes";
 import { friendlyDbError } from "@/utils/errors";
 import { fieldErrors } from "@/utils/validation";
 
@@ -167,3 +170,102 @@ export async function setClosedUntil(companyId: string, input: unknown): Promise
   return { ok: true, data: undefined, message: next ? "Período fechado." : "Escrituração reaberta." };
 }
 
+
+// ---------------------------------------------------------------------------
+// Apuração de tributos (DAS / Lucro Presumido)
+// ---------------------------------------------------------------------------
+const COMPETENCE_LABEL = (c: string) => `${c.slice(5, 7)}/${c.slice(0, 4)}`;
+
+/**
+ * Recalcula no servidor (o resultado enviado pelo navegador é ignorado), grava a
+ * apuração e, se pedido — ou se ela já estava contabilizada —, gera/atualiza o
+ * lançamento contábil no último dia da competência.
+ */
+export async function saveTaxAssessment(companyId: string, input: unknown, post: boolean): Promise<ActionResult<{ id: string }>> {
+  const w = await writeContext(companyId);
+  if ("error" in w) return { ok: false, error: w.error! };
+  const parsed = taxFormSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Verifique os campos destacados.", fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  const calc = runTaxCalc(v as Parameters<typeof runTaxCalc>[0]);
+  if (!calc.ok) return { ok: false, error: calc.error };
+
+  const { data: existing } = await w.supabase
+    .from("tax_assessments")
+    .select("id, entry_id")
+    .eq("company_id", companyId)
+    .eq("competence", v.competence)
+    .eq("regime", v.regime)
+    .maybeSingle();
+
+  let entryId = existing?.entry_id ?? null;
+  if (post || entryId) {
+    const postings = taxPostingLines(calc);
+    if (!postings.length) return { ok: false, error: "Não há valor a contabilizar." };
+    const codes = [...new Set(postings.flatMap((p) => [p.debit, p.credit]))];
+    const { data: accs } = await w.supabase.from("accounts").select("id, code, is_analytic, active").eq("company_id", companyId).in("code", codes);
+    const byCode = new Map((accs ?? []).map((a) => [a.code, a]));
+    const missing = codes.filter((c) => !byCode.get(c)?.is_analytic || !byCode.get(c)?.active);
+    if (missing.length) return { ok: false, error: `Para contabilizar, o plano de contas precisa das contas analíticas ativas: ${missing.join(", ")}.` };
+    // agrega por conta e lado
+    const agg = new Map<string, { account_id: string; debit: number; credit: number; memo: string }>();
+    for (const p of postings) {
+      for (const [code, side] of [[p.debit, "debit"], [p.credit, "credit"]] as const) {
+        const key = `${code}:${side}`;
+        const cur = agg.get(key) ?? { account_id: byCode.get(code)!.id, debit: 0, credit: 0, memo: "" };
+        cur[side] += p.amount;
+        cur.memo = cur.memo ? `${cur.memo}, ${p.memo}` : p.memo;
+        agg.set(key, cur);
+      }
+    }
+    const label = v.regime === "simples_nacional" ? "DAS — Simples Nacional" : "Tributos — Lucro Presumido";
+    const { data: eid, error } = await w.supabase.rpc("save_journal_entry", {
+      p_company_id: companyId,
+      p_entry_id: entryId,
+      p_entry: { entry_date: lastDayOf(v.competence), description: `Apuração ${label} ${COMPETENCE_LABEL(v.competence)}` },
+      p_lines: [...agg.values()].map((l) => ({ account_id: l.account_id, debit: l.debit / 100, credit: l.credit / 100, memo: l.memo.slice(0, 200) })),
+    });
+    if (error || !eid) return { ok: false, error: friendlyDbError(error) };
+    entryId = eid;
+  }
+
+  const row = {
+    inputs: v as unknown as Json,
+    result: calc as unknown as Json,
+    total: calc.total / 100,
+    due_date: v.regime === "simples_nacional" ? dasDueDate(v.competence) : null,
+    entry_id: entryId,
+  };
+  const res = existing
+    ? await w.supabase.from("tax_assessments").update(row).eq("id", existing.id).select("id").single()
+    : await w.supabase
+        .from("tax_assessments")
+        .insert({ ...row, organization_id: w.ctx.organization.id, company_id: companyId, competence: v.competence, regime: v.regime })
+        .select("id")
+        .single();
+  if (res.error || !res.data) return { ok: false, error: friendlyDbError(res.error) };
+  refresh(companyId);
+  return {
+    ok: true,
+    data: { id: res.data.id },
+    message: entryId ? "Apuração salva e contabilizada." : "Apuração salva.",
+  };
+}
+
+export async function deleteTaxAssessment(companyId: string, assessmentId: string): Promise<ActionResult> {
+  const w = await writeContext(companyId);
+  if ("error" in w) return { ok: false, error: w.error! };
+  if (!uuidSchema.safeParse(assessmentId).success) return { ok: false, error: "Apuração inválida." };
+  const { data: a } = await w.supabase.from("tax_assessments").select("id, entry_id").eq("id", assessmentId).eq("company_id", companyId).maybeSingle();
+  if (!a) return { ok: false, error: DENIED };
+  if (a.entry_id) {
+    // O lançamento sai junto; o banco recusa se o período estiver fechado.
+    const { error } = await w.supabase.from("journal_entries").delete().eq("id", a.entry_id).eq("company_id", companyId);
+    if (error) return { ok: false, error: friendlyDbError(error) };
+  }
+  const { error, count } = await w.supabase.from("tax_assessments").delete({ count: "exact" }).eq("id", a.id);
+  if (error) return { ok: false, error: friendlyDbError(error) };
+  if (!count) return { ok: false, error: DENIED };
+  refresh(companyId);
+  return { ok: true, data: undefined, message: a.entry_id ? "Apuração e lançamento excluídos." : "Apuração excluída." };
+}

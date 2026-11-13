@@ -79,7 +79,23 @@ remoção, e descrição dos papéis.
 - **Razão** por conta, com saldo corrente.
 - **Fechamento**: trava lançamentos até uma data; recuar ou reabrir só proprietário/administrador.
 - Indicadores do período: receita líquida, custos e despesas, resultado e disponibilidades.
+- **Impostos** (apuração por competência):
+  - **Simples Nacional (DAS)** — Anexos I a V (LC 123/2006, tabelas vigentes desde 2018) e opção
+    "Anexo III ou V pelo Fator R". RBT12, receita do mês (vendas e serviços) e folha de 12 meses vêm
+    sugeridos da escrituração e podem ser ajustados. Mostra faixa, alíquota nominal e efetiva, valor do
+    DAS, divisão por tributo (IRPJ, CSLL, COFINS, PIS, CPP, IPI, ICMS, ISS, com teto de 5% do ISS) e
+    vencimento (dia 20 do mês seguinte). Aceita mais de uma atividade (anexo) no mesmo mês; no 1º mês
+    de atividade usa o RBT12 proporcional; recusa RBT12 acima de R$ 4,8 milhões e avisa sobre o
+    sublimite de R$ 3,6 milhões e a CPP fora do DAS no Anexo IV.
+  - **Lucro Presumido** — PIS (0,65%) e COFINS (3%) mensais, ISS pela alíquota do município e, no fim
+    do trimestre, IRPJ (15% + adicional de 10%) e CSLL (9%) sobre as bases presumidas por atividade.
+  - **Salvar e contabilizar**: grava a apuração e gera o lançamento (DAS: D 3.2.1.01 / C 2.1.3.01;
+    Presumido: tributos sobre a receita, IRPJ e CSLL contra as contas a recolher) no último dia da
+    competência. Alterar a apuração atualiza o mesmo lançamento; excluir remove os dois.
+  - Não calcula o DAS-MEI (valor fixo) nem Lucro Real.
 
 ## Em preparação (próximas etapas)
+Apuração de impostos: retenções e substituição tributária no Simples, Lucro Real e emissão da guia.
+
 No financeiro, contas a pagar, emissão de boleto/Pix, NFS-e e conciliação bancária; na contabilidade,
 integração automática com o financeiro, importação de extratos e SPED.

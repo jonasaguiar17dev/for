@@ -9,6 +9,7 @@ export const ACCOUNTING_TABS = [
   { value: "dre", label: "DRE" },
   { value: "balanco", label: "Balanço" },
   { value: "razao", label: "Razão" },
+  { value: "impostos", label: "Impostos" },
   { value: "fechamento", label: "Fechamento" },
 ] as const;
 export type AccountingTab = (typeof ACCOUNTING_TABS)[number]["value"];

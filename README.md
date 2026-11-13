@@ -11,7 +11,8 @@ Entregas até aqui:
    automática, faturamento mensal idempotente, contas a receber, registro de pagamentos e indicadores
    financeiros.
 3. **Contabilidade** — plano de contas por empresa, lançamentos em partidas dobradas, balancete, DRE,
-   balanço patrimonial, razão e fechamento de período com trava no banco.
+   balanço patrimonial, razão e fechamento de período com trava no banco; apuração do DAS (Simples
+   Nacional) e dos tributos do Lucro Presumido, com contabilização automática.
 
 | Camada | Tecnologia |
 | --- | --- |
@@ -75,6 +76,7 @@ As migrations versionadas estão em `supabase/migrations/` e devem ser aplicadas
 | `20261114000100_dashboard_trends.sql` | Indicadores de tendência (novos clientes por mês, vencimentos em 7 dias) — somente leitura |
 | `20261115000100_dashboard_series.sql` | Séries mensais do dashboard (saldo, vencido, receita recorrente, adimplência) e próximos vencimentos — somente leitura |
 | `20261116000100_accounting.sql` | Contabilidade: plano de contas, lançamentos, partidas, fechamento, balancete e regras de partidas dobradas |
+| `20261117000100_tax_assessments.sql` | Apurações de tributos (DAS do Simples Nacional e Lucro Presumido) com vínculo ao lançamento contábil |
 
 **Opção A — Supabase CLI (recomendado):**
 

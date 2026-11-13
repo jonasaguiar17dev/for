@@ -73,6 +73,7 @@ O vínculo pontual de **gestor** de uma empresa não dá acesso de escrita finan
 | Ver plano de contas, lançamentos e relatórios | Quem lê a empresa (inclusive acesso pontual) |
 | Criar plano, contas e lançamentos; fechar período | Proprietário, administrador, contador |
 | Recuar ou reabrir um período fechado | Proprietário, administrador |
+| Apurar, contabilizar e excluir impostos | Proprietário, administrador, contador |
 
 Regras garantidas pelo banco (gatilhos e restrições, não apenas pela tela):
 

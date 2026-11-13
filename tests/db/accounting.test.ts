@@ -186,4 +186,26 @@ describeDb("Contabilidade", () => {
     expect(r.lines).toBe(0);
     expect(r.audit).toEqual(["insert", "delete"]);
   });
+
+  it("apuração de tributos: única por competência, vinculada ao lançamento e protegida pelo RLS", async () => {
+    const entryId = await entry("2027-04-30", "DAS 04/2027", [{ code: "3.2.1.01", debit: 600 }, { code: "2.1.3.01", credit: 600 }]);
+    const ins = (user: string, competence = "2027-04-01") =>
+      asUser(user, (c) =>
+        c.query(
+          "insert into public.tax_assessments (organization_id, company_id, competence, regime, inputs, result, total, entry_id) values ($1, $2, $3, 'simples_nacional', '{}', '{}', 600, $4) returning id",
+          [org, company, competence, entryId],
+        ),
+      );
+    const id = (await ins(U.accountant)).rows[0].id;
+    await expect(ins(U.accountant)).rejects.toThrow(/tax_assessments_company_competence_key/);
+    await expect(ins(U.viewer, "2027-05-01")).rejects.toThrow(/row-level security|violates/);
+    await expect(ins(U.accountant, "2027-05-15")).rejects.toThrow(/check/);
+    const other = await asUser(U.other, async (c) => (await c.query("select 1 from public.tax_assessments")).rowCount);
+    expect(other).toBe(0);
+    expect(await asUser(U.viewer, async (c) => (await c.query("select 1 from public.tax_assessments")).rowCount)).toBe(1);
+    // excluir o lançamento desvincula a apuração (sem apagá-la)
+    await asUser(U.accountant, (c) => c.query("delete from public.journal_entries where id = $1", [entryId]));
+    const row = await asUser(U.owner, async (c) => (await c.query("select entry_id, company_id from public.tax_assessments where id = $1", [id])).rows[0]);
+    expect(row).toEqual({ entry_id: null, company_id: company });
+  });
 });

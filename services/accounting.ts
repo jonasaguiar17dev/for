@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import type { AccountRow, CompanyRow, JournalEntryRow, JournalLineRow, TrialBalanceRow } from "@/types/database";
+import type { AccountRow, CompanyRow, JournalEntryRow, JournalLineRow, TaxAssessmentRow, TrialBalanceRow } from "@/types/database";
 import { compareCodes } from "@/utils/accounting";
 
 /** Divide listas grandes de ids para manter a URL do PostgREST curta. */
@@ -15,7 +15,7 @@ async function inChunks<T>(ids: string[], fetch: (chunk: string[]) => PromiseLik
   return out;
 }
 
-export type AccountingCompany = Pick<CompanyRow, "id" | "corporate_name" | "trade_name" | "cnpj" | "is_internal" | "status"> & {
+export type AccountingCompany = Pick<CompanyRow, "id" | "corporate_name" | "trade_name" | "cnpj" | "is_internal" | "status" | "tax_regime"> & {
   has_chart: boolean;
   closed_until: string | null;
 };
@@ -26,7 +26,7 @@ export async function listAccountingCompanies(organizationId: string): Promise<A
   const [{ data: companies, error }, { data: roots }, { data: settings }] = await Promise.all([
     supabase
       .from("companies")
-      .select("id, corporate_name, trade_name, cnpj, is_internal, status")
+      .select("id, corporate_name, trade_name, cnpj, is_internal, status, tax_regime")
       .eq("organization_id", organizationId)
       .order("corporate_name"),
     supabase.from("accounts").select("company_id").eq("organization_id", organizationId).eq("code", "1"),
@@ -45,7 +45,7 @@ export async function getAccountingCompany(organizationId: string, companyId: st
   const [{ data: company }, { data: settings }, { count }] = await Promise.all([
     supabase
       .from("companies")
-      .select("id, corporate_name, trade_name, cnpj, is_internal, status")
+      .select("id, corporate_name, trade_name, cnpj, is_internal, status, tax_regime")
       .eq("organization_id", organizationId)
       .eq("id", companyId)
       .maybeSingle(),
@@ -171,4 +171,82 @@ export async function getLedger(
       balance = Math.round((balance + (account.nature === "devedora" ? debit - credit : credit - debit)) * 100) / 100;
       return { id: l.id, entry_id: e.id, number: e.number, entry_date: e.entry_date, description: e.description, memo: l.memo, debit, credit, balance };
     });
+}
+
+// ---------------------------------------------------------------------------
+// Apuração de tributos
+// ---------------------------------------------------------------------------
+export type TaxSuggestion = {
+  /** Receita bruta do mês por conta (centavos): vendas (3.1.1.02) e serviços (demais 3.1). */
+  salesMonth: number;
+  servicesMonth: number;
+  salesQuarter: number;
+  servicesQuarter: number;
+  rbt12: number;
+  payroll12: number;
+  monthsWithRevenue: number;
+};
+
+const cents = (v: number) => Math.round(v * 100);
+const shiftMonth = (iso: string, n: number) => {
+  const [y, m] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 10);
+};
+const dayBefore = (iso: string) => new Date(Date.parse(`${iso}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+
+/** Valores sugeridos a partir da escrituração (o usuário pode ajustar antes de apurar). */
+export async function getTaxSuggestion(companyId: string, competence: string): Promise<TaxSuggestion> {
+  const monthEnd = dayBefore(shiftMonth(competence, 1));
+  const qStart = shiftMonth(competence, -((Number(competence.slice(5, 7)) - 1) % 3));
+  const from12 = shiftMonth(competence, -12);
+  const to12 = dayBefore(competence);
+  const [month, quarter, year] = await Promise.all([
+    getTrialBalance(companyId, { from: competence, to: monthEnd }),
+    getTrialBalance(companyId, { from: qStart, to: monthEnd }),
+    getTrialBalance(companyId, { from: from12, to: to12 }),
+  ]);
+  const rev = (rows: TrialBalanceRow[], test: (code: string) => boolean) =>
+    cents(rows.filter((r) => r.is_analytic && test(r.code)).reduce((s, r) => s + (r.credit - r.debit), 0));
+  const isSales = (c: string) => c === "3.1.1.02";
+  const isRevenue = (c: string) => c.startsWith("3.1.");
+  const payroll = cents(
+    year.filter((r) => r.is_analytic && (r.code === "5.1.1.01" || r.code === "5.1.1.02")).reduce((s, r) => s + (r.debit - r.credit), 0),
+  );
+  // meses com receita nos 12 anteriores (para indicar início de atividade)
+  const supabase = await createClient();
+  const { data: dates } = await supabase
+    .from("journal_entries")
+    .select("entry_date")
+    .eq("company_id", companyId)
+    .gte("entry_date", from12)
+    .lte("entry_date", to12);
+  const months = new Set((dates ?? []).map((d) => d.entry_date.slice(0, 7)));
+  return {
+    salesMonth: Math.max(0, rev(month, isSales)),
+    servicesMonth: Math.max(0, rev(month, (c) => isRevenue(c) && !isSales(c))),
+    salesQuarter: Math.max(0, rev(quarter, isSales)),
+    servicesQuarter: Math.max(0, rev(quarter, (c) => isRevenue(c) && !isSales(c))),
+    rbt12: Math.max(0, rev(year, isRevenue)),
+    payroll12: Math.max(0, payroll),
+    monthsWithRevenue: months.size,
+  };
+}
+
+export type TaxAssessmentEntry = TaxAssessmentRow & { entry_number: number | null };
+
+export async function listTaxAssessments(companyId: string): Promise<TaxAssessmentEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tax_assessments")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("competence", { ascending: false })
+    .limit(36);
+  if (error) throw new Error("Não foi possível carregar as apurações.");
+  const ids = (data ?? []).map((a) => a.entry_id).filter((x): x is string => Boolean(x));
+  const entries = ids.length
+    ? await inChunks(ids, (chunk) => supabase.from("journal_entries").select("id, number").in("id", chunk))
+    : [];
+  const num = new Map(entries.map((e) => [e.id, e.number]));
+  return (data ?? []).map((a) => ({ ...a, total: Number(a.total), entry_number: a.entry_id ? (num.get(a.entry_id) ?? null) : null }));
 }

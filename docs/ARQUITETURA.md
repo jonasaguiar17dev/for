@@ -37,6 +37,7 @@ Server Actions repetem as checagens apenas para dar respostas rápidas e mensage
 | Plano de contas | `accounts` | Por empresa; hierarquia pelo código (`1.1.1.02`), sintética/analítica, natureza |
 | Lançamentos | `journal_entries` + `journal_lines` | Número sequencial por empresa; partidas com débito ou crédito |
 | Fechamento contábil | `accounting_settings` | `closed_until` por empresa |
+| Apuração de tributos | `tax_assessments` | Uma por empresa, competência e regime; entradas, resultado e lançamento gerado |
 
 Regras de integridade relevantes:
 
@@ -79,6 +80,10 @@ audit_logs (organization_id, company_id, user_id, action, entity, entity_id, cha
 | `setup_chart_of_accounts(empresa)` | INVOKER | Cria o plano de contas padrão |
 | `save_journal_entry(empresa, lançamento, cabeçalho, partidas)` | INVOKER | Cria/edita lançamento com numeração sob trava |
 | `trial_balance(empresa, de, até)` | INVOKER | Balancete; base da DRE e do Balanço (`utils/accounting.ts`) |
+
+O cálculo dos tributos (`utils/taxes.ts`) é uma função pura executada no navegador (prévia) e **refeita no
+servidor** na gravação — o valor enviado pelo navegador é descartado. As tabelas do Simples estão no
+código e cobertas por testes unitários (soma da repartição, faixas, Fator R, teto do ISS, arredondamento).
 
 ## Organização do código
 
