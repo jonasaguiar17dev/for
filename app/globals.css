@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+/*
+ * AGUIAR ERP — Design system
+ * ---------------------------------------------------------------------------
+ * Marca:  Grafite #1C1917 · Vermelho #C8102E · Branco #FFFFFF · Bege #F5F0E8
+ * Direção: superfícies claras e neutras (bege como temperatura, não como
+ * cor dominante), grafite para estrutura e navegação, vermelho reservado para
+ * ação principal, foco e o item ativo. Status financeiros têm cores próprias.
+ * Tipografia: Geist Sans (interface) e Geist Mono (identificadores).
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Marca */
+  --brand-red: #c8102e;
+  --brand-red-strong: #a70d26;
+  --brand-graphite: #1c1917;
+  --brand-white: #ffffff;
+  --brand-cream: #f5f0e8;
+
+  --radius: 0.625rem;
+
+  /* Superfícies e texto */
+  --background: #f8f6f2;
+  --foreground: #1c1917;
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  --subtle: #f3f0ea;
+  --muted: #f1ede6;
+  --muted-foreground: #78716c;
+  --faint: #a8a29e;
+  --accent: #f3efe8;
+  --accent-foreground: #1c1917;
+  --border: #e9e4db;
+  --border-strong: #dcd5c9;
+  --input: #ddd6ca;
+
+  /* Ação */
+  --primary: var(--brand-red);
+  --primary-hover: var(--brand-red-strong);
+  --primary-foreground: #ffffff;
+  --secondary: #f1ede6;
+  --secondary-foreground: #1c1917;
+  --ring: var(--brand-red);
+
+  /* Semânticas (status) */
+  --success: #15803d;
+  --success-soft: #ecfdf3;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --danger: #c8102e;
+  --danger-soft: #fef2f3;
+  --info: #1d4ed8;
+  --info-soft: #eff4ff;
+  --neutral: #57534e;
+  --neutral-soft: #f3f1ee;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+
+  /* Navegação */
+  --sidebar: #161412;
+  --sidebar-elevated: #1f1c1a;
+  --sidebar-foreground: #e7e2da;
+  --sidebar-muted: #8f8983;
+  --sidebar-accent: #26221f;
+  --sidebar-border: #2b2724;
+
+  /* Gráficos */
+  --chart-1: #1c1917;
+  --chart-2: #c8102e;
+  --chart-3: #a8a29e;
+  --chart-4: #15803d;
+  --chart-5: #b45309;
+
+  /* Sombras */
+  --shadow-xs: 0 1px 2px rgb(28 25 23 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(28 25 23 / 0.04), 0 1px 3px rgb(28 25 23 / 0.04);
+  --shadow-md: 0 2px 4px rgb(28 25 23 / 0.04), 0 8px 24px -6px rgb(28 25 23 / 0.08);
+  --shadow-lg: 0 12px 32px -8px rgb(28 25 23 / 0.18), 0 2px 6px rgb(28 25 23 / 0.06);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-subtle: var(--subtle);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-neutral: var(--neutral);
+  --color-neutral-soft: var(--neutral-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-elevated: var(--sidebar-elevated);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-brand-red: var(--brand-red);
+  --color-brand-graphite: var(--brand-graphite);
+  --color-brand-cream: var(--brand-cream);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-fade-up: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-scale-in: scale-in 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-slide-in-left: slide-in-left 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.97) translateY(-2px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-feature-settings: "ss01" 1, "cv11" 1;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  ::selection {
+    background: rgb(200 16 46 / 0.14);
+  }
+}
+
+@layer components {
+  /* Números financeiros: algarismos tabulares e leve compressão. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  /* Animação de entrada de conteúdo (respeita prefers-reduced-motion). */
+  .enter {
+    animation: var(--animate-fade-up);
+  }
+  .enter-stagger > * {
+    animation: var(--animate-fade-up);
+  }
+  .enter-stagger > *:nth-child(2) { animation-delay: 40ms; }
+  .enter-stagger > *:nth-child(3) { animation-delay: 80ms; }
+  .enter-stagger > *:nth-child(4) { animation-delay: 120ms; }
+  .enter-stagger > *:nth-child(5) { animation-delay: 160ms; }
+  .enter-stagger > *:nth-child(6) { animation-delay: 200ms; }
+
+  .popover-anim[data-state="open"] {
+    animation: pop-in 0.14s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .overlay-anim[data-state="open"] {
+    animation: var(--animate-fade-in);
+  }
+  .dialog-anim[data-state="open"] {
+    animation: var(--animate-scale-in);
+  }
+  .sheet-anim[data-state="open"] {
+    animation: var(--animate-slide-in-left);
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--muted) 25%, #ebe6de 37%, var(--muted) 63%);
+    background-size: 400% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  /* Rolagem fina para áreas internas. */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
