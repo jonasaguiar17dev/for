@@ -7,6 +7,11 @@
  */
 import type {
   Address,
+  AdjustmentIndex,
+  BillingFrequency,
+  ContractState,
+  PaymentMethod,
+  ReceivableStatus,
   CompanyRole,
   CompanyStatus,
   ContractStatus,
@@ -151,6 +156,94 @@ export type DashboardSummary = {
   }[];
 };
 
+export type ServiceRow = {
+  id: string;
+  organization_id: string;
+  name: string;
+  description: string | null;
+  default_amount: number;
+  billing_frequency: BillingFrequency;
+  active: boolean;
+  created_at: string;
+};
+
+export type ContractRow = {
+  id: string;
+  organization_id: string;
+  company_id: string;
+  number: string;
+  status: ContractState;
+  start_date: string;
+  end_date: string | null;
+  billing_day: number;
+  adjustment_index: AdjustmentIndex;
+  adjustment_month: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ContractItemRow = {
+  id: string;
+  contract_id: string;
+  service_id: string | null;
+  description: string;
+  quantity: number;
+  unit_amount: number;
+  billing_frequency: BillingFrequency;
+  created_at: string;
+};
+
+export type ReceivableRow = {
+  id: string;
+  organization_id: string;
+  company_id: string;
+  contract_id: string | null;
+  description: string;
+  competence: string;
+  due_date: string;
+  amount: number;
+  status: ReceivableStatus;
+  paid_at: string | null;
+  paid_amount: number | null;
+  payment_method: PaymentMethod | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SearchReceivablesRow = {
+  id: string;
+  company_id: string;
+  corporate_name: string;
+  cnpj: string;
+  contract_id: string | null;
+  contract_number: string | null;
+  description: string;
+  competence: string;
+  due_date: string;
+  amount: number;
+  status: ReceivableStatus;
+  is_overdue: boolean;
+  paid_at: string | null;
+  paid_amount: number | null;
+  payment_method: PaymentMethod | null;
+  total_count: number;
+  total_amount: number;
+};
+
+export type FinanceSummary = {
+  open_total: number;
+  open_count: number;
+  overdue_total: number;
+  overdue_count: number;
+  month_billed: number;
+  month_received: number;
+  active_contracts: number;
+  mrr: number;
+  received_by_month: { month: string; billed: number; received: number }[];
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -181,6 +274,20 @@ export type Database = {
         Pick<ClientDocumentRow, "company_id" | "document_name" | "storage_path"> & Partial<ClientDocumentRow>
       >;
       audit_logs: Table<AuditLogRow, never, never>;
+      services: Table<ServiceRow, Pick<ServiceRow, "organization_id" | "name"> & Partial<ServiceRow>>;
+      contracts: Table<
+        ContractRow,
+        Pick<ContractRow, "organization_id" | "company_id" | "number" | "start_date"> & Partial<ContractRow>
+      >;
+      contract_items: Table<
+        ContractItemRow,
+        Pick<ContractItemRow, "contract_id" | "description" | "unit_amount"> & Partial<ContractItemRow>
+      >;
+      receivables: Table<
+        ReceivableRow,
+        Pick<ReceivableRow, "organization_id" | "company_id" | "description" | "competence" | "due_date" | "amount"> &
+          Partial<ReceivableRow>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -223,6 +330,31 @@ export type Database = {
         Args: { p_company_id: string; p_email: string; p_role: CompanyRole };
         Returns: string;
       };
+      save_contract: {
+        Args: { p_organization_id: string; p_contract_id: string | null; p_contract: Json; p_items: Json };
+        Returns: string;
+      };
+      generate_billing: {
+        Args: { p_organization_id: string; p_competence: string };
+        Returns: number;
+      };
+      finance_summary: {
+        Args: { p_organization_id: string; p_today?: string };
+        Returns: Json;
+      };
+      search_receivables: {
+        Args: {
+          p_organization_id: string;
+          p_search?: string | null;
+          p_status?: string | null;
+          p_competence?: string | null;
+          p_company_id?: string | null;
+          p_today?: string;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: SearchReceivablesRow[];
+      };
       is_valid_cnpj: {
         Args: { p_cnpj: string };
         Returns: boolean;
@@ -237,6 +369,11 @@ export type Database = {
       contract_status: ContractStatus;
       onboarding_status: OnboardingStatus;
       document_type: DocumentType;
+      billing_frequency: BillingFrequency;
+      contract_state: ContractState;
+      adjustment_index: AdjustmentIndex;
+      receivable_status: ReceivableStatus;
+      payment_method: PaymentMethod;
     };
     CompositeTypes: Record<string, never>;
   };

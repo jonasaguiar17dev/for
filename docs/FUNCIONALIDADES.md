@@ -39,6 +39,29 @@ Distribuição de clientes por situação e de empresas por regime tributário, 
 Nome da organização, perfil do usuário, inclusão de membros por e-mail, alteração de papel/status,
 remoção, e descrição dos papéis.
 
+## Contratos (`/contratos`)
+- **Catálogo de serviços** (`/contratos/servicos`): nome, descrição, valor padrão e periodicidade
+  (mensal, trimestral, semestral, anual ou avulso). Somente proprietário/administrador edita.
+- **Contratos**: cliente, vigência (início e término opcional), dia de vencimento (1–28), índice e mês de
+  reajuste, observações e itens (serviço do catálogo ou personalizado, quantidade, valor unitário e
+  periodicidade). Número gerado automaticamente por ano (`CT-2027-0001`). Mostra mensalidade e previsão em
+  12 meses durante o preenchimento.
+- **Ficha do contrato**: dados, serviços, cobranças geradas e histórico; ações de ativar, suspender,
+  encerrar, reabrir e excluir.
+- A ficha do cliente ganhou a aba **Contratos e cobranças**.
+
+## Financeiro (`/financeiro`)
+- Indicadores: a receber, vencido, recebido no mês (e faturado no mês) e receita recorrente mensal.
+- Gráfico de faturado × recebido nos últimos 6 meses.
+- **Gerar faturamento**: cria as cobranças da competência para os contratos ativos, respeitando a
+  periodicidade de cada item (o avulso é cobrado só no mês de início). Pode ser executado de novo sem
+  duplicar cobranças.
+- **Cobrança avulsa** para serviços fora do contrato.
+- Lista com pesquisa (cliente, CNPJ, descrição), filtro por competência e situação (a vencer, vencido, em
+  aberto, pago, cancelado), total filtrado e paginação.
+- Registrar pagamento (data, valor e forma), estornar e cancelar cobrança.
+- O dashboard passou a mostrar os indicadores financeiros.
+
 ## Em preparação (próximas etapas)
-Contratos, Financeiro e Contabilidade (DRE e Balanço) — apenas navegação e escopo planejado; nenhum dado
-simulado.
+Contabilidade (plano de contas, lançamentos, DRE e Balanço) e, no financeiro, contas a pagar, emissão de
+boleto/Pix, NFS-e e conciliação bancária.

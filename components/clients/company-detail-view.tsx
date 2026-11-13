@@ -11,9 +11,15 @@ import { requireOrgContext } from "@/lib/auth/session";
 import { can, canEditCompany } from "@/lib/permissions";
 import { uuidSchema } from "@/schemas/common";
 import { getCompanyDetail } from "@/services/companies";
+import { searchContracts, searchReceivables } from "@/services/finance";
 import { TAX_REGIME_LABELS } from "@/types/domain";
 import { formatCnpj } from "@/utils/cnpj";
 import { formatCep, formatCnae, formatDate, formatPhone } from "@/utils/format";
+
+import { ReceivablesTable } from "@/components/finance/receivables-table";
+import { ContractStateBadge } from "@/components/finance/status-badges";
+import { formatISODate } from "@/utils/dates";
+import { formatBRL } from "@/utils/money";
 
 import { AuditTimeline } from "./audit-timeline";
 import { CompanyAccessPanel } from "./company-access-panel";
@@ -38,6 +44,13 @@ export async function CompanyDetailView({ id, section }: { id: string; section: 
   if (!detail) notFound();
 
   const { company, client, contacts, documents, history, access } = detail;
+  const [contracts, receivables] = company.is_internal
+    ? [[], null]
+    : await Promise.all([
+        searchContracts(ctx.organization.id, { companyId: company.id }),
+        searchReceivables(ctx.organization.id, { companyId: company.id }),
+      ]);
+  const canFinance = can(ctx.role, "finance:write");
   const myCompanyRole = access.find((a) => a.user_id === ctx.user.id)?.role;
   const canWrite = canEditCompany(ctx.role, myCompanyRole);
   const canManage = can(ctx.role, "members:manage");
@@ -98,6 +111,7 @@ export async function CompanyDetailView({ id, section }: { id: string; section: 
         <TabsList>
           <TabsTrigger value="dados">Dados cadastrais</TabsTrigger>
           <TabsTrigger value="contatos">Contatos ({contacts.length})</TabsTrigger>
+          {!company.is_internal && <TabsTrigger value="financeiro">Contratos e cobranças</TabsTrigger>}
           <TabsTrigger value="documentos">Documentos ({documents.length})</TabsTrigger>
           <TabsTrigger value="acessos">Acessos</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
@@ -185,6 +199,48 @@ export async function CompanyDetailView({ id, section }: { id: string; section: 
             </CardContent>
           </Card>
         </TabsContent>
+
+        {!company.is_internal && (
+          <TabsContent value="financeiro" className="grid gap-4">
+            <Card>
+              <CardContent className="grid gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold">Contratos</h3>
+                  {canFinance && (
+                    <Button asChild size="sm">
+                      <Link href={`/contratos/novo?empresa=${company.id}`}>Novo contrato</Link>
+                    </Button>
+                  )}
+                </div>
+                {contracts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum contrato para esta empresa.</p>
+                ) : (
+                  <ul className="divide-y rounded-lg border">
+                    {contracts.map((ct) => (
+                      <li key={ct.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                        <Link href={`/contratos/${ct.id}`} className="font-medium tabular-nums hover:text-primary">
+                          {ct.number}
+                        </Link>
+                        <span className="text-sm text-muted-foreground">
+                          desde {formatISODate(ct.start_date)} · {formatBRL(ct.monthly_amount)}/mês
+                        </span>
+                        <span className="ml-auto">
+                          <ContractStateBadge status={ct.status} />
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="px-0 sm:px-0">
+                <h3 className="px-5 pb-2 font-semibold sm:px-6">Cobranças</h3>
+                <ReceivablesTable rows={receivables?.rows ?? []} canWrite={canFinance} showCompany={false} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="documentos">
           <Card>

@@ -17,7 +17,7 @@ export function SidebarContents({ organizationName }: { organizationName: string
       <div className="flex-1 overflow-y-auto px-3">
         <SidebarNav />
       </div>
-      <p className="px-5 py-4 text-[11px] text-sidebar-muted">v0.1 · Fundação</p>
+      <p className="px-5 py-4 text-[11px] text-sidebar-muted">v0.2 · Contratos e Financeiro</p>
     </div>
   );
 }

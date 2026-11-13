@@ -2,10 +2,16 @@
 
 Plataforma de gestão da **Aguiar Contabilidade & Gestão** — ERP web multiempresa e multiusuário.
 
-Esta é a **primeira entrega (fundação)**: autenticação, controle de permissões, isolamento multiempresa com RLS,
-dashboard com indicadores reais, cadastro/listagem/pesquisa/edição de clientes e empresas, contatos, documentos,
-histórico de alterações e exportação CSV. Os módulos Contratos, Financeiro e Contabilidade estão apenas
-preparados na navegação e serão desenvolvidos nas próximas etapas.
+Entregas até aqui:
+
+1. **Fundação** — autenticação, controle de permissões, isolamento multiempresa com RLS, dashboard com
+   indicadores reais, cadastro/listagem/pesquisa/edição de clientes e empresas, contatos, documentos,
+   histórico de alterações e exportação CSV.
+2. **Contratos e Financeiro** — catálogo de serviços, contratos com itens e periodicidade, numeração
+   automática, faturamento mensal idempotente, contas a receber, registro de pagamentos e indicadores
+   financeiros.
+
+O módulo de Contabilidade (escrituração, DRE e Balanço) está apenas preparado na navegação.
 
 | Camada | Tecnologia |
 | --- | --- |
@@ -64,6 +70,7 @@ As migrations versionadas estão em `supabase/migrations/` e devem ser aplicadas
 | `20261106000300_audit.sql` | Trilha de auditoria por gatilhos |
 | `20261106000400_rpc_functions.sql` | Funções de negócio (criar organização, salvar empresa, pesquisa, dashboard, acessos) |
 | `20261106000500_storage.sql` | Bucket privado `client-documents` e políticas do Storage |
+| `20261113000100_contracts_finance.sql` | Catálogo de serviços, contratos, itens, contas a receber, faturamento e indicadores financeiros |
 
 **Opção A — Supabase CLI (recomendado):**
 
@@ -124,7 +131,9 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/aguiar_test npm ru
 
 Cobrem: isolamento entre organizações, papéis (proprietário, contador, leitor, colaborador), membro suspenso,
 usuário sem vínculo, imutabilidade da auditoria, proteção do papel de proprietário, validação de CNPJ
-(numérico e alfanumérico), duplicidade, pesquisa/paginação e políticas do Storage.
+(numérico e alfanumérico), duplicidade, pesquisa/paginação e políticas do Storage; e, no financeiro,
+numeração de contratos, faturamento por periodicidade sem duplicidade, consistência de pagamentos,
+indicadores e isolamento de contratos e cobranças entre organizações.
 
 ## 5. Publicação na Vercel
 
@@ -141,7 +150,8 @@ usuário sem vínculo, imutabilidade da auditoria, proteção do papel de propri
    ex.: `gru1` São Paulo) para reduzir latência.
 
 Checklist pós-deploy: login, recuperação de senha (e-mail chega e o link abre a tela de nova senha),
-onboarding, cadastro de cliente, pesquisa, edição, envio e download de documento.
+onboarding, cadastro de cliente, pesquisa, edição, envio e download de documento, cadastro de serviço,
+contrato, geração de faturamento e registro de pagamento.
 
 ## 6. Estrutura do projeto
 

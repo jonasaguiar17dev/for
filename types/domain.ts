@@ -135,3 +135,67 @@ export interface Address {
 export type ActionResult<T = undefined> =
   | { ok: true; data: T; message?: string }
   | { ok: false; error: string; fieldErrors?: Record<string, string[] | undefined> };
+
+// -----------------------------------------------------------------------------
+// Contratos e financeiro
+// -----------------------------------------------------------------------------
+export const BILLING_FREQUENCIES = ["mensal", "trimestral", "semestral", "anual", "avulso"] as const;
+export type BillingFrequency = (typeof BILLING_FREQUENCIES)[number];
+
+export const CONTRACT_STATES = ["rascunho", "ativo", "suspenso", "encerrado"] as const;
+export type ContractState = (typeof CONTRACT_STATES)[number];
+
+export const ADJUSTMENT_INDEXES = ["nenhum", "ipca", "igpm", "inpc", "percentual_fixo"] as const;
+export type AdjustmentIndex = (typeof ADJUSTMENT_INDEXES)[number];
+
+export const RECEIVABLE_STATUSES = ["aberto", "pago", "cancelado"] as const;
+export type ReceivableStatus = (typeof RECEIVABLE_STATUSES)[number];
+
+/** Filtro de cobranças: inclui situações derivadas da data de vencimento. */
+export const RECEIVABLE_FILTERS = ["a_vencer", "vencido", "aberto", "pago", "cancelado"] as const;
+export type ReceivableFilter = (typeof RECEIVABLE_FILTERS)[number];
+
+export const PAYMENT_METHODS = ["pix", "boleto", "transferencia", "dinheiro", "cartao", "outro"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export const BILLING_FREQUENCY_LABELS: Record<BillingFrequency, string> = {
+  mensal: "Mensal",
+  trimestral: "Trimestral",
+  semestral: "Semestral",
+  anual: "Anual",
+  avulso: "Avulso (uma vez)",
+};
+
+export const CONTRACT_STATE_LABELS: Record<ContractState, string> = {
+  rascunho: "Rascunho",
+  ativo: "Ativo",
+  suspenso: "Suspenso",
+  encerrado: "Encerrado",
+};
+
+export const ADJUSTMENT_INDEX_LABELS: Record<AdjustmentIndex, string> = {
+  nenhum: "Sem reajuste",
+  ipca: "IPCA",
+  igpm: "IGP-M",
+  inpc: "INPC",
+  percentual_fixo: "Percentual fixo",
+};
+
+export const RECEIVABLE_FILTER_LABELS: Record<ReceivableFilter, string> = {
+  a_vencer: "A vencer",
+  vencido: "Vencido",
+  aberto: "Em aberto (todos)",
+  pago: "Pago",
+  cancelado: "Cancelado",
+};
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  pix: "Pix",
+  boleto: "Boleto",
+  transferencia: "Transferência",
+  dinheiro: "Dinheiro",
+  cartao: "Cartão",
+  outro: "Outro",
+};
+
+export const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] as const;

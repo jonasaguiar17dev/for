@@ -53,9 +53,23 @@ Membros com status **suspenso** ou **convidado** não acessam nada (nem por vín
 - Cabeçalhos de segurança (HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy).
 - Exportação CSV neutraliza fórmulas (proteção contra *CSV injection*).
 
+## Financeiro
+
+| Ação | Quem pode |
+| --- | --- |
+| Ver contratos e cobranças | Quem lê a empresa (inclusive acesso pontual) |
+| Criar/editar contratos, gerar faturamento, lançar e baixar cobranças | Proprietário, administrador, contador |
+| Excluir contratos e cobranças | Proprietário, administrador |
+| Editar o catálogo de serviços | Proprietário, administrador |
+
+O vínculo pontual de **gestor** de uma empresa não dá acesso de escrita financeira. Os valores usam
+`numeric(14,2)`; um contrato gera no máximo uma cobrança por competência (índice único), e o pagamento só
+é aceito com data, valor e forma preenchidos (restrição no banco).
+
 ## Auditoria
 
-Gatilhos `AFTER INSERT/UPDATE/DELETE` em organizações, empresas, clientes, contatos, documentos e vínculos
+Gatilhos `AFTER INSERT/UPDATE/DELETE` em organizações, empresas, clientes, contatos, documentos, vínculos,
+serviços, contratos, itens de contrato e cobranças
 gravam em `audit_logs`: autor (`auth.uid()`), ação, entidade, id, organização, empresa e — nas alterações —
 apenas os campos modificados (`{campo: {old, new}}`). Usuários não podem inserir, alterar ou excluir logs.
 A aba **Histórico** da ficha do cliente exibe essa trilha.

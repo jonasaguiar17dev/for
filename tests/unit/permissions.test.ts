@@ -18,6 +18,14 @@ describe("matriz de permissões", () => {
     expect(can(null, "company:read_all")).toBe(false);
   });
 
+  it("financeiro: contador escreve; leitor e colaborador não; catálogo só para gestão", () => {
+    expect(can("accountant", "finance:write")).toBe(true);
+    expect(can("viewer", "finance:write")).toBe(false);
+    expect(can("member", "finance:write")).toBe(false);
+    expect(can("accountant", "services:manage")).toBe(false);
+    expect(can("admin", "services:manage")).toBe(true);
+  });
+
   it("somente proprietário atribui papel de proprietário", () => {
     expect(canAssignRole("owner", "owner")).toBe(true);
     expect(canAssignRole("admin", "owner")).toBe(false);

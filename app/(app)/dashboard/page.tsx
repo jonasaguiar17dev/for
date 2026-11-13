@@ -12,15 +12,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrgContext } from "@/lib/auth/session";
 import { can } from "@/lib/permissions";
 import { getDashboardSummary } from "@/services/dashboard";
+import { getFinanceSummary } from "@/services/finance";
 import { CONTRACT_STATUS_LABELS, CONTRACT_STATUSES, TAX_REGIME_LABELS, TAX_REGIMES } from "@/types/domain";
 import { formatCnpj } from "@/utils/cnpj";
 import { formatDate } from "@/utils/format";
+import { formatBRL } from "@/utils/money";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   const ctx = await requireOrgContext();
-  const summary = await getDashboardSummary(ctx.organization.id);
+  const [summary, finance] = await Promise.all([
+    getDashboardSummary(ctx.organization.id),
+    getFinanceSummary(ctx.organization.id),
+  ]);
   const { erro } = await searchParams;
   const byStatus = (s: (typeof CONTRACT_STATUSES)[number]) => summary.clients_by_status[s] ?? 0;
 
@@ -54,6 +59,27 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <StatCard label="Em implantação" value={byStatus("em_implantacao")} icon={Rocket} href="/clientes?status=em_implantacao" />
         <StatCard label="Suspensos" value={byStatus("suspenso")} icon={CirclePause} href="/clientes?status=suspenso" />
         <StatCard label="Encerrados" value={byStatus("encerrado")} icon={CircleX} href="/clientes?status=encerrado" />
+      </section>
+
+      <section aria-label="Financeiro" className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        {(
+          [
+            { label: "A receber", value: finance.open_total, hint: `${finance.open_count} em aberto`, href: "/financeiro?status=a_vencer" },
+            { label: "Vencido", value: finance.overdue_total, hint: `${finance.overdue_count} em atraso`, href: "/financeiro?status=vencido", alert: true },
+            { label: "Recebido no mês", value: finance.month_received, hint: `faturado ${formatBRL(finance.month_billed)}`, href: "/financeiro?status=pago" },
+            { label: "Receita recorrente", value: finance.mrr, hint: `${finance.active_contracts} contrato(s) ativo(s)`, href: "/contratos?status=ativo" },
+          ] as { label: string; value: number; hint: string; href: string; alert?: boolean }[]
+        ).map((k) => (
+          <Link key={k.label} href={k.href} className="rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
+            <Card className="h-full p-4 transition-shadow hover:shadow-md">
+              <p className="text-xs font-medium text-muted-foreground">{k.label}</p>
+              <p className={`mt-1 font-serif text-xl font-semibold tabular-nums sm:text-2xl ${k.alert && k.value > 0 ? "text-destructive" : ""}`}>
+                {formatBRL(k.value)}
+              </p>
+              <p className="text-xs text-muted-foreground">{k.hint}</p>
+            </Card>
+          </Link>
+        ))}
       </section>
 
       <section className="mt-6 grid gap-4 lg:grid-cols-2">

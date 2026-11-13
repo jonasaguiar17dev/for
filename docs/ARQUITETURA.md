@@ -31,6 +31,9 @@ Server Actions repetem as checagens apenas para dar respostas rápidas e mensage
 | Contatos | `client_contacts` | N por empresa |
 | Documentos | `client_documents` | Metadados; arquivo no Storage |
 | Auditoria | `audit_logs` | Gravada por gatilhos, imutável |
+| Catálogo de serviços | `services` | Valor padrão e periodicidade |
+| Contratos | `contracts` + `contract_items` | Vigência, vencimento, reajuste e itens |
+| Contas a receber | `receivables` | Cobranças por competência; pagamento com data, valor e forma |
 
 Regras de integridade relevantes:
 
@@ -66,6 +69,10 @@ audit_logs (organization_id, company_id, user_id, action, entity, entity_id, cha
 | `dashboard_summary(org)` | INVOKER | Indicadores reais do dashboard e relatórios |
 | `add_organization_member(org, email, papel)` | DEFINER, checa owner/admin | Inclusão de membros |
 | `set_company_member(empresa, email, papel)` | DEFINER, checa owner/admin | Acesso pontual a empresas |
+| `save_contract(org, contrato, itens)` | INVOKER | Cria/edita contrato e itens; numeração `CT-AAAA-NNNN` com trava por organização |
+| `generate_billing(org, competência)` | INVOKER, checa escrita financeira | Gera cobranças dos contratos ativos, sem duplicar |
+| `search_receivables(org, …)` | INVOKER | Lista cobranças com situação derivada (a vencer/vencido) |
+| `finance_summary(org)` | INVOKER | Indicadores e série de 6 meses |
 
 ## Organização do código
 

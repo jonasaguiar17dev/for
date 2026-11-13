@@ -15,7 +15,9 @@ export type Permission =
   | "document:write"
   | "members:manage"
   | "organization:update"
-  | "audit:read_all";
+  | "audit:read_all"
+  | "finance:write"
+  | "services:manage";
 
 const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
   owner: [
@@ -27,6 +29,8 @@ const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     "members:manage",
     "organization:update",
     "audit:read_all",
+    "finance:write",
+    "services:manage",
   ],
   admin: [
     "company:read_all",
@@ -37,8 +41,10 @@ const ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
     "members:manage",
     "organization:update",
     "audit:read_all",
+    "finance:write",
+    "services:manage",
   ],
-  accountant: ["company:read_all", "company:create", "company:update", "document:write"],
+  accountant: ["company:read_all", "company:create", "company:update", "document:write", "finance:write"],
   viewer: ["company:read_all"],
   member: [],
 };
