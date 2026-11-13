@@ -200,3 +200,29 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 };
 
 export const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] as const;
+
+// -----------------------------------------------------------------------------
+// Contabilidade
+// -----------------------------------------------------------------------------
+export const ACCOUNT_TYPES = ["ativo", "passivo", "patrimonio_liquido", "receita", "custo", "despesa"] as const;
+export type AccountType = (typeof ACCOUNT_TYPES)[number];
+export const ACCOUNT_NATURES = ["devedora", "credora"] as const;
+export type AccountNature = (typeof ACCOUNT_NATURES)[number];
+
+export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+  ativo: "Ativo",
+  passivo: "Passivo",
+  patrimonio_liquido: "Patrimônio líquido",
+  receita: "Receita",
+  custo: "Custo",
+  despesa: "Despesa",
+};
+export const ACCOUNT_NATURE_LABELS: Record<AccountNature, string> = { devedora: "Devedora", credora: "Credora" };
+export const DEFAULT_NATURE: Record<AccountType, AccountNature> = {
+  ativo: "devedora",
+  passivo: "credora",
+  patrimonio_liquido: "credora",
+  receita: "credora",
+  custo: "devedora",
+  despesa: "devedora",
+};

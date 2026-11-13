@@ -6,6 +6,8 @@
  *   npx supabase gen types typescript --project-id <id> --schema public > types/database.ts
  */
 import type {
+  AccountNature,
+  AccountType,
   Address,
   AdjustmentIndex,
   BillingFrequency,
@@ -263,6 +265,64 @@ export type FinanceMonth = {
   due_open: number;
 };
 
+export type AccountRow = {
+  id: string;
+  organization_id: string;
+  company_id: string;
+  code: string;
+  name: string;
+  type: AccountType;
+  nature: AccountNature;
+  is_analytic: boolean;
+  parent_id: string | null;
+  active: boolean;
+  created_at: string;
+};
+
+export type JournalEntryRow = {
+  id: string;
+  organization_id: string;
+  company_id: string;
+  number: number;
+  entry_date: string;
+  description: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JournalLineRow = {
+  id: string;
+  entry_id: string;
+  company_id: string;
+  account_id: string;
+  debit: number;
+  credit: number;
+  memo: string | null;
+  position: number;
+};
+
+export type AccountingSettingsRow = {
+  company_id: string;
+  organization_id: string;
+  closed_until: string | null;
+  updated_at: string;
+};
+
+export type TrialBalanceRow = {
+  account_id: string;
+  code: string;
+  name: string;
+  type: AccountType;
+  nature: AccountNature;
+  is_analytic: boolean;
+  level: number;
+  opening: number;
+  debit: number;
+  credit: number;
+  closing: number;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -301,6 +361,22 @@ export type Database = {
       contract_items: Table<
         ContractItemRow,
         Pick<ContractItemRow, "contract_id" | "description" | "unit_amount"> & Partial<ContractItemRow>
+      >;
+      accounts: Table<
+        AccountRow,
+        Pick<AccountRow, "organization_id" | "company_id" | "code" | "name" | "type" | "nature"> & Partial<AccountRow>
+      >;
+      journal_entries: Table<
+        JournalEntryRow,
+        Pick<JournalEntryRow, "organization_id" | "company_id" | "number" | "entry_date" | "description"> & Partial<JournalEntryRow>
+      >;
+      journal_lines: Table<
+        JournalLineRow,
+        Pick<JournalLineRow, "entry_id" | "company_id" | "account_id"> & Partial<JournalLineRow>
+      >;
+      accounting_settings: Table<
+        AccountingSettingsRow,
+        Pick<AccountingSettingsRow, "company_id" | "organization_id"> & Partial<AccountingSettingsRow>
       >;
       receivables: Table<
         ReceivableRow,
@@ -374,6 +450,18 @@ export type Database = {
         };
         Returns: SearchReceivablesRow[];
       };
+      setup_chart_of_accounts: {
+        Args: { p_company_id: string };
+        Returns: number;
+      };
+      save_journal_entry: {
+        Args: { p_company_id: string; p_entry_id: string | null; p_entry: Json; p_lines: Json };
+        Returns: string;
+      };
+      trial_balance: {
+        Args: { p_company_id: string; p_from: string; p_to: string };
+        Returns: TrialBalanceRow[];
+      };
       is_valid_cnpj: {
         Args: { p_cnpj: string };
         Returns: boolean;
@@ -393,6 +481,8 @@ export type Database = {
       adjustment_index: AdjustmentIndex;
       receivable_status: ReceivableStatus;
       payment_method: PaymentMethod;
+      account_type: AccountType;
+      account_nature: AccountNature;
     };
     CompositeTypes: Record<string, never>;
   };

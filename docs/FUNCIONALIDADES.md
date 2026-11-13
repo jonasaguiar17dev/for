@@ -62,6 +62,24 @@ remoção, e descrição dos papéis.
 - Registrar pagamento (data, valor e forma), estornar e cancelar cobrança.
 - O dashboard passou a mostrar os indicadores financeiros.
 
+## Contabilidade (`/contabilidade`)
+- Lista das empresas visíveis ao usuário, com a situação da escrituração (ativa ou sem plano de contas) e a
+  data de fechamento.
+- **Plano de contas padrão** criado com um clique (cerca de 96 contas: Ativo, Passivo, Patrimônio líquido,
+  Receitas, Custos e Despesas). Inclusão de contas e subcontas (código sugerido automaticamente), renomear,
+  mudar a natureza (contas redutoras), inativar e excluir (apenas sem movimento e sem subcontas).
+- **Lançamentos** em partidas dobradas: número sequencial por empresa, data, histórico e quantas partidas
+  forem necessárias. O formulário mostra débitos, créditos e diferença em tempo real e completa a última
+  partida com a diferença. Só aceita contas analíticas e ativas.
+- **Balancete** (saldo anterior, débitos, créditos e saldo atual, com totais por grupo).
+- **DRE** do período (receita bruta, deduções, receita líquida, custos, lucro bruto, despesas, resultado
+  antes do IRPJ/CSLL e resultado líquido, com % sobre a receita líquida).
+- **Balanço patrimonial** na data final (circulante e não circulante, PL e resultado não encerrado), com a
+  verificação ativo = passivo + PL.
+- **Razão** por conta, com saldo corrente.
+- **Fechamento**: trava lançamentos até uma data; recuar ou reabrir só proprietário/administrador.
+- Indicadores do período: receita líquida, custos e despesas, resultado e disponibilidades.
+
 ## Em preparação (próximas etapas)
-Contabilidade (plano de contas, lançamentos, DRE e Balanço) e, no financeiro, contas a pagar, emissão de
-boleto/Pix, NFS-e e conciliação bancária.
+No financeiro, contas a pagar, emissão de boleto/Pix, NFS-e e conciliação bancária; na contabilidade,
+integração automática com o financeiro, importação de extratos e SPED.

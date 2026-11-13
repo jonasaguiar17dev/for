@@ -34,6 +34,9 @@ Server Actions repetem as checagens apenas para dar respostas rápidas e mensage
 | Catálogo de serviços | `services` | Valor padrão e periodicidade |
 | Contratos | `contracts` + `contract_items` | Vigência, vencimento, reajuste e itens |
 | Contas a receber | `receivables` | Cobranças por competência; pagamento com data, valor e forma |
+| Plano de contas | `accounts` | Por empresa; hierarquia pelo código (`1.1.1.02`), sintética/analítica, natureza |
+| Lançamentos | `journal_entries` + `journal_lines` | Número sequencial por empresa; partidas com débito ou crédito |
+| Fechamento contábil | `accounting_settings` | `closed_until` por empresa |
 
 Regras de integridade relevantes:
 
@@ -73,6 +76,9 @@ audit_logs (organization_id, company_id, user_id, action, entity, entity_id, cha
 | `generate_billing(org, competência)` | INVOKER, checa escrita financeira | Gera cobranças dos contratos ativos, sem duplicar |
 | `search_receivables(org, …)` | INVOKER | Lista cobranças com situação derivada (a vencer/vencido) |
 | `finance_summary(org)` | INVOKER | Indicadores e série de 6 meses |
+| `setup_chart_of_accounts(empresa)` | INVOKER | Cria o plano de contas padrão |
+| `save_journal_entry(empresa, lançamento, cabeçalho, partidas)` | INVOKER | Cria/edita lançamento com numeração sob trava |
+| `trial_balance(empresa, de, até)` | INVOKER | Balancete; base da DRE e do Balanço (`utils/accounting.ts`) |
 
 ## Organização do código
 

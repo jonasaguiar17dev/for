@@ -10,8 +10,8 @@ Entregas até aqui:
 2. **Contratos e Financeiro** — catálogo de serviços, contratos com itens e periodicidade, numeração
    automática, faturamento mensal idempotente, contas a receber, registro de pagamentos e indicadores
    financeiros.
-
-O módulo de Contabilidade (escrituração, DRE e Balanço) está apenas preparado na navegação.
+3. **Contabilidade** — plano de contas por empresa, lançamentos em partidas dobradas, balancete, DRE,
+   balanço patrimonial, razão e fechamento de período com trava no banco.
 
 | Camada | Tecnologia |
 | --- | --- |
@@ -74,6 +74,7 @@ As migrations versionadas estão em `supabase/migrations/` e devem ser aplicadas
 | `20261113000100_contracts_finance.sql` | Catálogo de serviços, contratos, itens, contas a receber, faturamento e indicadores financeiros |
 | `20261114000100_dashboard_trends.sql` | Indicadores de tendência (novos clientes por mês, vencimentos em 7 dias) — somente leitura |
 | `20261115000100_dashboard_series.sql` | Séries mensais do dashboard (saldo, vencido, receita recorrente, adimplência) e próximos vencimentos — somente leitura |
+| `20261116000100_accounting.sql` | Contabilidade: plano de contas, lançamentos, partidas, fechamento, balancete e regras de partidas dobradas |
 
 **Opção A — Supabase CLI (recomendado):**
 
@@ -136,7 +137,9 @@ Cobrem: isolamento entre organizações, papéis (proprietário, contador, leito
 usuário sem vínculo, imutabilidade da auditoria, proteção do papel de proprietário, validação de CNPJ
 (numérico e alfanumérico), duplicidade, pesquisa/paginação e políticas do Storage; e, no financeiro,
 numeração de contratos, faturamento por periodicidade sem duplicidade, consistência de pagamentos,
-indicadores e isolamento de contratos e cobranças entre organizações.
+indicadores e isolamento de contratos e cobranças entre organizações; na contabilidade, plano padrão,
+numeração, recusa de lançamento desbalanceado, balancete fechando, travas do plano de contas, fechamento
+de período (reabertura só pelo proprietário) e leitura sem escrita para leitor e gestor.
 
 ## 5. Publicação na Vercel
 
@@ -154,7 +157,7 @@ indicadores e isolamento de contratos e cobranças entre organizações.
 
 Checklist pós-deploy: login, recuperação de senha (e-mail chega e o link abre a tela de nova senha),
 onboarding, cadastro de cliente, pesquisa, edição, envio e download de documento, cadastro de serviço,
-contrato, geração de faturamento e registro de pagamento.
+contrato, geração de faturamento, registro de pagamento, plano de contas, lançamento contábil e DRE.
 
 ## 6. Estrutura do projeto
 

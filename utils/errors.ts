@@ -11,7 +11,14 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   organization_members_org_user_key: "Este usuário já é membro da organização.",
   company_members_company_user_key: "Este usuário já possui acesso a esta empresa.",
   client_documents_storage_path_key: "Este arquivo já foi registrado.",
+  accounts_company_code_key: "Já existe uma conta com este código no plano de contas.",
+  journal_lines_account_fk: "Esta conta possui lançamentos e não pode ser excluída. Inative-a.",
+  accounts_parent_fk: "Esta conta possui subcontas e não pode ser excluída.",
 };
+
+/** Regras contábeis lançadas pelos gatilhos, já redigidas para o usuário. */
+const ACCOUNTING_RULE =
+  /lançamento|partidas|desbalanceado|período fechado|conta superior|subcontas|sintética|analítica|inativa|nível abaixo|plano de contas|reabrir/i;
 
 const GENERIC_PERMISSION = "Você não tem permissão para realizar esta operação.";
 const GENERIC_ERROR = "Não foi possível concluir a operação. Tente novamente.";
@@ -26,10 +33,11 @@ export function friendlyDbError(error: DbError | null | undefined): string {
 
   switch (error.code) {
     case "23505":
+      if (ACCOUNTING_RULE.test(message)) return message;
       return "Registro duplicado.";
     case "23514":
       // Mensagens de regra de negócio lançadas pelos gatilhos (em português).
-      if (/proprietário/i.test(message)) return message;
+      if (/proprietário/i.test(message) || ACCOUNTING_RULE.test(message)) return message;
       return "Algum dado não atende às regras de validação (verifique CNPJ, CNAE, e-mail e telefone).";
     case "42501":
       if (/row-level security|permission denied/i.test(message)) return GENERIC_PERMISSION;

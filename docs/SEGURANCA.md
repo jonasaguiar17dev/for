@@ -66,6 +66,24 @@ O vínculo pontual de **gestor** de uma empresa não dá acesso de escrita finan
 `numeric(14,2)`; um contrato gera no máximo uma cobrança por competência (índice único), e o pagamento só
 é aceito com data, valor e forma preenchidos (restrição no banco).
 
+## Contabilidade
+
+| Ação | Quem pode |
+| --- | --- |
+| Ver plano de contas, lançamentos e relatórios | Quem lê a empresa (inclusive acesso pontual) |
+| Criar plano, contas e lançamentos; fechar período | Proprietário, administrador, contador |
+| Recuar ou reabrir um período fechado | Proprietário, administrador |
+
+Regras garantidas pelo banco (gatilhos e restrições, não apenas pela tela):
+
+- Todo lançamento precisa de ao menos duas partidas e débitos = créditos (gatilho adiado, verificado no
+  fim da transação).
+- Cada partida tem débito **ou** crédito, em conta analítica e ativa da mesma empresa (FK composta).
+- Datas até o fechamento não aceitam inclusão, alteração ou exclusão de lançamentos.
+- Conta com movimento não muda de código nem de tipo e não pode ser excluída; a conta superior precisa ser
+  sintética e o código, um nível abaixo.
+- Plano de contas, lançamentos e fechamento são auditados.
+
 ## Auditoria
 
 Gatilhos `AFTER INSERT/UPDATE/DELETE` em organizações, empresas, clientes, contatos, documentos, vínculos,

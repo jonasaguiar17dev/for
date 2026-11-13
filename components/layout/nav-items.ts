@@ -33,7 +33,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Contábil",
     items: [
-      { href: "/contabilidade", label: "Contabilidade", icon: Calculator, soon: true },
+      { href: "/contabilidade", label: "Contabilidade", icon: Calculator, shortcut: "G B" },
       { href: "/relatorios", label: "Relatórios", icon: BarChart3, shortcut: "G R" },
     ],
   },
