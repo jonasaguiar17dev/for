@@ -239,11 +239,11 @@ export function ContractForm({
             <dl className="flex gap-6 text-sm">
               <div>
                 <dt className="text-muted-foreground">Mensalidade</dt>
-                <dd className="font-serif text-xl font-semibold tabular-nums">{formatBRL(monthly)}</dd>
+                <dd className="num text-xl font-semibold tracking-tight">{formatBRL(monthly)}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Previsão em 12 meses</dt>
-                <dd className="font-serif text-xl font-semibold tabular-nums">{formatBRL(yearly)}</dd>
+                <dd className="num text-xl font-semibold tracking-tight">{formatBRL(yearly)}</dd>
               </div>
             </dl>
           </div>

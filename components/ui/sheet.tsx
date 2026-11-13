@@ -15,14 +15,14 @@ const SheetTitle = SheetPrimitive.Title;
 function SheetContent({ className, children, ...props }: React.ComponentProps<typeof SheetPrimitive.Content>) {
   return (
     <SheetPrimitive.Portal>
-      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50" />
+      <SheetPrimitive.Overlay className="overlay-anim fixed inset-0 z-50 bg-black/55 backdrop-blur-[2px]" />
       <SheetPrimitive.Content
-        className={cn("fixed inset-y-0 left-0 z-50 flex h-full w-72 max-w-[85vw] flex-col shadow-xl", className)}
+        className={cn("sheet-anim fixed inset-y-0 left-0 z-50 flex h-full w-[min(18rem,86vw)] flex-col shadow-2xl", className)}
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="absolute top-4 right-4 rounded-sm text-sidebar-muted hover:text-white">
-          <XIcon className="size-5" />
+        <SheetPrimitive.Close className="absolute top-4 right-3 rounded-md p-1.5 text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-white">
+          <XIcon className="size-4" />
           <span className="sr-only">Fechar menu</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>

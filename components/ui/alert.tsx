@@ -3,17 +3,21 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const alertVariants = cva("relative w-full rounded-lg border px-4 py-3 text-sm [&>svg]:mr-2 [&>svg]:inline [&>svg]:size-4", {
-  variants: {
-    variant: {
-      default: "bg-card",
-      destructive: "border-destructive/30 bg-destructive/5 text-destructive",
-      success: "border-success/30 bg-success/5 text-success",
-      info: "border-info/30 bg-info/5 text-info",
+const alertVariants = cva(
+  "relative flex w-full items-start gap-2 rounded-lg border px-3.5 py-3 text-sm [&>svg]:mt-0.5 [&>svg]:size-4 [&>svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "border-border bg-card",
+        destructive: "border-danger/20 bg-danger-soft text-danger",
+        success: "border-success/20 bg-success-soft text-success",
+        info: "border-info/20 bg-info-soft text-info",
+        warning: "border-warning/25 bg-warning-soft text-warning",
+      },
     },
+    defaultVariants: { variant: "default" },
   },
-  defaultVariants: { variant: "default" },
-});
+);
 
 function Alert({ className, variant, ...props }: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
   return <div role="alert" className={cn(alertVariants({ variant }), className)} {...props} />;

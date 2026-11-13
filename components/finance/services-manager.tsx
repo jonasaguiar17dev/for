@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ServiceRow } from "@/types/database";
 import { BILLING_FREQUENCIES, BILLING_FREQUENCY_LABELS, type BillingFrequency } from "@/types/domain";
 import { formatBRL, formatMoneyInput } from "@/utils/money";
@@ -45,7 +44,7 @@ export function ServicesManager({ services, canManage }: { services: ServiceRow[
   return (
     <div className="grid gap-6">
       {canManage && (
-        <form onSubmit={submit} className="grid gap-4 rounded-lg border border-dashed p-4 md:grid-cols-[1.4fr_1.6fr_.9fr_1fr_auto] md:items-start" noValidate>
+        <form onSubmit={submit} className="grid gap-4 rounded-xl border border-border bg-subtle/50 p-4 md:grid-cols-[1.4fr_1.6fr_.9fr_1fr_auto] md:items-start" noValidate>
           <FormField id="svc-name" label="Serviço" required error={errors.name?.[0]}>
             <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
           </FormField>
@@ -81,86 +80,77 @@ export function ServicesManager({ services, canManage }: { services: ServiceRow[
       {services.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">Nenhum serviço cadastrado.</p>
       ) : (
-        <div className="-mx-5 sm:-mx-6">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Serviço</TableHead>
-                <TableHead>Periodicidade</TableHead>
-                <TableHead className="text-right">Valor padrão</TableHead>
-                <TableHead>Situação</TableHead>
-                {canManage && <TableHead className="text-right">Ações</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {services.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>
-                    <p className="font-medium">{s.name}</p>
-                    {s.description && <p className="text-xs text-muted-foreground">{s.description}</p>}
-                  </TableCell>
-                  <TableCell>{BILLING_FREQUENCY_LABELS[s.billing_frequency]}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatBRL(s.default_amount)}</TableCell>
-                  <TableCell>
-                    <Badge variant={s.active ? "success" : "neutral"}>{s.active ? "Ativo" : "Inativo"}</Badge>
-                  </TableCell>
-                  {canManage && (
-                    <TableCell className="text-right whitespace-nowrap">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={pending}
-                        onClick={() =>
-                          startTransition(async () => {
-                            const r = await saveService(s.id, { ...s, description: s.description ?? "", active: !s.active });
-                            if (!r.ok) return void toast.error(r.error);
-                            router.refresh();
-                          })
-                        }
-                      >
-                        {s.active ? "Desativar" : "Ativar"}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Editar ${s.name}`}
-                        onClick={() =>
-                          setDraft({
-                            id: s.id,
-                            name: s.name,
-                            description: s.description ?? "",
-                            default_amount: formatMoneyInput(s.default_amount),
-                            billing_frequency: s.billing_frequency,
-                            active: s.active,
-                          })
-                        }
-                      >
-                        <Pencil />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Excluir ${s.name}`}
-                        disabled={pending}
-                        onClick={() => {
-                          if (!window.confirm(`Excluir o serviço "${s.name}"?`)) return;
-                          startTransition(async () => {
-                            const r = await deleteService(s.id);
-                            if (!r.ok) return void toast.error(r.error);
-                            toast.success(r.message ?? "Excluído.");
-                            router.refresh();
-                          });
-                        }}
-                      >
-                        <Trash2 className="text-destructive" />
-                      </Button>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ul className="-mx-5 divide-y divide-border border-t border-border">
+          {services.map((s) => (
+            <li key={s.id} className="flex flex-col gap-2 px-5 py-3.5 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                  {s.name}
+                  <Badge dot variant={s.active ? "success" : "neutral"}>
+                    {s.active ? "Ativo" : "Inativo"}
+                  </Badge>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {BILLING_FREQUENCY_LABELS[s.billing_frequency]}
+                  {s.description ? ` · ${s.description}` : ""}
+                </p>
+              </div>
+              <p className="num text-sm font-semibold sm:w-32 sm:text-right">{formatBRL(s.default_amount)}</p>
+              {canManage && (
+                <div className="-ml-2 flex items-center gap-1 sm:ml-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={pending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const r = await saveService(s.id, { ...s, description: s.description ?? "", active: !s.active });
+                        if (!r.ok) return void toast.error(r.error);
+                        router.refresh();
+                      })
+                    }
+                  >
+                    {s.active ? "Desativar" : "Ativar"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Editar ${s.name}`}
+                    onClick={() =>
+                      setDraft({
+                        id: s.id,
+                        name: s.name,
+                        description: s.description ?? "",
+                        default_amount: formatMoneyInput(s.default_amount),
+                        billing_frequency: s.billing_frequency,
+                        active: s.active,
+                      })
+                    }
+                  >
+                    <Pencil />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Excluir ${s.name}`}
+                    disabled={pending}
+                    onClick={() => {
+                      if (!window.confirm(`Excluir o serviço "${s.name}"?`)) return;
+                      startTransition(async () => {
+                        const r = await deleteService(s.id);
+                        if (!r.ok) return void toast.error(r.error);
+                        toast.success(r.message ?? "Excluído.");
+                        router.refresh();
+                      });
+                    }}
+                  >
+                    <Trash2 className="text-danger" />
+                  </Button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

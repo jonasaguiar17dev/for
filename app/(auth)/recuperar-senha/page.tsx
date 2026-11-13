@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Recuperar senha" };
 export default function ForgotPasswordPage() {
   return (
     <div>
-      <h1 className="font-serif text-3xl font-semibold">Recuperar senha</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Recuperar senha</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Informe seu e-mail e enviaremos um link seguro para criar uma nova senha.
       </p>

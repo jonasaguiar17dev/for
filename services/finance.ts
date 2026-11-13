@@ -162,6 +162,8 @@ export async function getFinanceSummary(organizationId: string): Promise<Finance
     ...s,
     open_total: Number(s.open_total),
     overdue_total: Number(s.overdue_total),
+    due_soon_total: Number(s.due_soon_total ?? 0),
+    due_soon_count: Number(s.due_soon_count ?? 0),
     month_billed: Number(s.month_billed),
     month_received: Number(s.month_received),
     mrr: Number(s.mrr),

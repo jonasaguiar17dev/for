@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CompaniesTable } from "@/components/clients/companies-table";
-import { ListFilters } from "@/components/clients/list-filters";
 import { Pagination, pageHref } from "@/components/clients/pagination";
+import { SearchFilters } from "@/components/finance/search-filters";
+import { StatusTabs } from "@/components/finance/status-tabs";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,9 +13,16 @@ import { requireOrgContext } from "@/lib/auth/session";
 import { can } from "@/lib/permissions";
 import { clientFiltersSchema } from "@/schemas/company";
 import { PAGE_SIZE, searchCompanies } from "@/services/companies";
-import { CONTRACT_STATUS_LABELS, CONTRACT_STATUSES } from "@/types/domain";
+import { CONTRACT_STATUS_LABELS, TAX_REGIME_LABELS, TAX_REGIMES } from "@/types/domain";
 
 export const metadata: Metadata = { title: "Clientes" };
+
+const TABS = [
+  { value: "ativo", label: CONTRACT_STATUS_LABELS.ativo, dot: "var(--success)" },
+  { value: "em_implantacao", label: CONTRACT_STATUS_LABELS.em_implantacao, dot: "var(--info)" },
+  { value: "suspenso", label: CONTRACT_STATUS_LABELS.suspenso, dot: "var(--warning)" },
+  { value: "encerrado", label: CONTRACT_STATUS_LABELS.encerrado, dot: "var(--faint)" },
+];
 
 export default async function ClientsPage({ searchParams }: PageProps<"/clientes">) {
   const ctx = await requireOrgContext();
@@ -32,9 +40,9 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clientes
   return (
     <>
       <PageHeader
-        eyebrow="Cadastro"
+        eyebrow="Cadastros"
         title="Clientes"
-        description="Empresas atendidas pelo escritório e situação contratual."
+        description="Empresas atendidas pelo escritório e situação contratual de cada uma."
         actions={
           <>
             <Button asChild variant="outline">
@@ -52,22 +60,31 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clientes
           </>
         }
       />
-      <Card className="p-4 sm:p-5">
-        <ListFilters
-          statusParam="status"
-          statusLabel="Situação"
-          statusOptions={CONTRACT_STATUSES.map((s) => ({ value: s, label: CONTRACT_STATUS_LABELS[s] }))}
-        />
-        <div className="-mx-4 mt-4 border-t sm:-mx-5">
-          <CompaniesTable rows={result.rows} hrefBase="/clientes" mode="clients" />
+      <Card className="overflow-hidden">
+        <div className="grid gap-3 border-b border-border p-4">
+          <StatusTabs basePath="/clientes" param="status" current={filters.status} options={TABS} keep={keep} />
+          <SearchFilters
+            placeholder="Pesquisar por razão social, nome fantasia ou CNPJ…"
+            selects={[
+              {
+                param: "regime",
+                label: "Regime tributário",
+                allLabel: "Todos os regimes",
+                options: TAX_REGIMES.map((r) => ({ value: r, label: TAX_REGIME_LABELS[r] })),
+              },
+            ]}
+          />
         </div>
-        <Pagination
-          page={result.page}
-          pageCount={result.pageCount}
-          total={result.total}
-          pageSize={PAGE_SIZE}
-          buildHref={(p) => pageHref("/clientes", keep, p)}
-        />
+        <CompaniesTable rows={result.rows} hrefBase="/clientes" mode="clients" />
+        <div className="border-t border-border px-4 sm:px-5">
+          <Pagination
+            page={result.page}
+            pageCount={result.pageCount}
+            total={result.total}
+            pageSize={PAGE_SIZE}
+            buildHref={(p) => pageHref("/clientes", keep, p)}
+          />
+        </div>
       </Card>
     </>
   );

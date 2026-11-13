@@ -29,7 +29,7 @@ export function ResetPasswordForm() {
   });
 
   return (
-    <form onSubmit={onSubmit} className="mt-8 grid gap-5" noValidate>
+    <form onSubmit={onSubmit} className="mt-8 grid gap-4" noValidate>
       {error && <Alert variant="destructive">{error}</Alert>}
       <FormField
         id="password"
@@ -42,7 +42,7 @@ export function ResetPasswordForm() {
       <FormField id="confirmPassword" label="Confirmar senha" error={form.formState.errors.confirmPassword?.message}>
         <Input type="password" autoComplete="new-password" {...form.register("confirmPassword")} />
       </FormField>
-      <Button type="submit" size="lg" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending && <Loader2 className="animate-spin" />}
         Salvar nova senha
       </Button>

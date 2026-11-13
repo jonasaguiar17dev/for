@@ -152,7 +152,7 @@ export const RECEIVABLE_STATUSES = ["aberto", "pago", "cancelado"] as const;
 export type ReceivableStatus = (typeof RECEIVABLE_STATUSES)[number];
 
 /** Filtro de cobranças: inclui situações derivadas da data de vencimento. */
-export const RECEIVABLE_FILTERS = ["a_vencer", "vencido", "aberto", "pago", "cancelado"] as const;
+export const RECEIVABLE_FILTERS = ["a_vencer", "vence_em_breve", "vencido", "aberto", "pago", "cancelado"] as const;
 export type ReceivableFilter = (typeof RECEIVABLE_FILTERS)[number];
 
 export const PAYMENT_METHODS = ["pix", "boleto", "transferencia", "dinheiro", "cartao", "outro"] as const;
@@ -182,7 +182,8 @@ export const ADJUSTMENT_INDEX_LABELS: Record<AdjustmentIndex, string> = {
 };
 
 export const RECEIVABLE_FILTER_LABELS: Record<ReceivableFilter, string> = {
-  a_vencer: "A vencer",
+  a_vencer: "A receber",
+  vence_em_breve: "Vence em até 7 dias",
   vencido: "Vencido",
   aberto: "Em aberto (todos)",
   pago: "Pago",

@@ -31,11 +31,19 @@ const ONBOARDING_VARIANT = {
 
 export function ContractStatusBadge({ status }: { status: ContractStatus | null | undefined }) {
   if (!status) return <Badge variant="neutral">Sem contrato</Badge>;
-  return <Badge variant={CONTRACT_VARIANT[status]}>{CONTRACT_STATUS_LABELS[status]}</Badge>;
+  return (
+    <Badge dot variant={CONTRACT_VARIANT[status]}>
+      {CONTRACT_STATUS_LABELS[status]}
+    </Badge>
+  );
 }
 
 export function CompanyStatusBadge({ status }: { status: CompanyStatus }) {
-  return <Badge variant={COMPANY_VARIANT[status]}>{COMPANY_STATUS_LABELS[status]}</Badge>;
+  return (
+    <Badge dot variant={COMPANY_VARIANT[status]}>
+      {COMPANY_STATUS_LABELS[status]}
+    </Badge>
+  );
 }
 
 export function OnboardingStatusBadge({ status }: { status: OnboardingStatus }) {

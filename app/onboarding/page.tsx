@@ -25,7 +25,7 @@ export default async function OnboardingPage() {
           </Button>
         </form>
       </div>
-      <h1 className="font-serif text-3xl font-semibold">Configuração inicial</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Configuração inicial</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Olá, {user.email}. Você ainda não pertence a nenhuma organização. Se a sua conta deveria ter acesso a um
         ambiente existente, peça a um administrador para incluí-la. Para criar o ambiente da Aguiar, cadastre a

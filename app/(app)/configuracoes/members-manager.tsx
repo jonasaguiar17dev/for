@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { canAssignRole } from "@/lib/permissions";
 import { type AddMemberInput, addMemberSchema } from "@/schemas/organization";
 import type { MemberEntry } from "@/services/organization";
@@ -64,7 +63,7 @@ export function MembersManager({
               return r.ok ? r : { ok: false, error: r.error };
             }),
           )}
-          className="grid gap-4 rounded-lg border border-dashed p-4 sm:grid-cols-[1fr_220px_auto] sm:items-start"
+          className="grid gap-4 rounded-xl border border-border bg-subtle/50 p-4 sm:grid-cols-[1fr_200px_auto] sm:items-start"
         >
           <FormField id="member-email" label="E-mail do usuário" error={form.formState.errors.email?.message}>
             <Input type="email" {...form.register("email")} />
@@ -84,88 +83,78 @@ export function MembersManager({
         </form>
       )}
 
-      <div className="-mx-5 sm:-mx-6">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Usuário</TableHead>
-              <TableHead>Papel</TableHead>
-              <TableHead>Status</TableHead>
-              {canManage && <TableHead className="text-right">Ações</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {members.map((m) => {
-              const editable = canManage && m.user_id !== actorId && (m.role !== "owner" || actorRole === "owner");
-              return (
-                <TableRow key={m.id}>
-                  <TableCell>
-                    <p className="font-medium">{m.profile?.full_name || m.profile?.email || "—"}</p>
-                    <p className="text-xs text-muted-foreground">{m.profile?.email}</p>
-                  </TableCell>
-                  <TableCell>
-                    {editable ? (
-                      <NativeSelect
-                        aria-label="Papel"
-                        defaultValue={m.role}
-                        disabled={pending}
-                        className="h-8 min-w-36"
-                        onChange={(e) => run(() => updateMember({ memberId: m.id, role: e.target.value }))}
-                      >
-                        {ORG_ROLES.filter((r) => canAssignRole(actorRole, r) || r === m.role).map((r) => (
-                          <option key={r} value={r}>
-                            {ORG_ROLE_LABELS[r]}
-                          </option>
-                        ))}
-                      </NativeSelect>
-                    ) : (
-                      <Badge variant={m.role === "owner" ? "dark" : "neutral"}>{ORG_ROLE_LABELS[m.role]}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editable ? (
-                      <NativeSelect
-                        aria-label="Status"
-                        defaultValue={m.status}
-                        disabled={pending}
-                        className="h-8 min-w-32"
-                        onChange={(e) =>
-                          run(() => updateMember({ memberId: m.id, status: e.target.value as MemberStatus }))
-                        }
-                      >
-                        {MEMBER_STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {MEMBER_STATUS_LABELS[s]}
-                          </option>
-                        ))}
-                      </NativeSelect>
-                    ) : (
-                      <Badge variant={m.status === "active" ? "success" : "warning"}>{MEMBER_STATUS_LABELS[m.status]}</Badge>
-                    )}
-                  </TableCell>
-                  {canManage && (
-                    <TableCell className="text-right">
-                      {editable && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={pending}
-                          aria-label="Remover membro"
-                          onClick={() => {
-                            if (window.confirm("Remover este usuário da organização?")) run(() => removeMember(m.id));
-                          }}
-                        >
-                          <Trash2 className="text-destructive" />
-                        </Button>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <ul className="-mx-5 divide-y divide-border border-t border-border">
+        {members.map((m) => {
+          const editable = canManage && m.user_id !== actorId && (m.role !== "owner" || actorRole === "owner");
+          const name = m.profile?.full_name || m.profile?.email || "—";
+          return (
+            <li key={m.id} className="flex flex-col gap-3 px-5 py-3.5 md:flex-row md:items-center">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-subtle text-[11px] font-semibold text-muted-foreground">
+                  {name.slice(0, 2).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {name}
+                    {m.user_id === actorId && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(você)</span>}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{m.profile?.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pl-11 md:pl-0">
+                {editable ? (
+                  <>
+                    <NativeSelect
+                      aria-label={`Papel de ${name}`}
+                      defaultValue={m.role}
+                      disabled={pending}
+                      className="h-8 md:w-40"
+                      onChange={(e) => run(() => updateMember({ memberId: m.id, role: e.target.value }))}
+                    >
+                      {ORG_ROLES.filter((r) => canAssignRole(actorRole, r) || r === m.role).map((r) => (
+                        <option key={r} value={r}>
+                          {ORG_ROLE_LABELS[r]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                    <NativeSelect
+                      aria-label={`Status de ${name}`}
+                      defaultValue={m.status}
+                      disabled={pending}
+                      className="h-8 md:w-32"
+                      onChange={(e) => run(() => updateMember({ memberId: m.id, status: e.target.value as MemberStatus }))}
+                    >
+                      {MEMBER_STATUSES.map((st) => (
+                        <option key={st} value={st}>
+                          {MEMBER_STATUS_LABELS[st]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      disabled={pending}
+                      aria-label={`Remover ${name}`}
+                      onClick={() => {
+                        if (window.confirm("Remover este usuário da organização?")) run(() => removeMember(m.id));
+                      }}
+                    >
+                      <Trash2 className="text-danger" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Badge variant={m.role === "owner" ? "dark" : "neutral"}>{ORG_ROLE_LABELS[m.role]}</Badge>
+                    <Badge dot variant={m.status === "active" ? "success" : "warning"}>
+                      {MEMBER_STATUS_LABELS[m.status]}
+                    </Badge>
+                  </>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

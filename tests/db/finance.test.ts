@@ -148,6 +148,16 @@ describeDb("Contratos e financeiro", () => {
     expect(Number(jan.received)).toBe(2486.5);
   });
 
+  it("indica cobranças que vencem nos próximos 7 dias", async () => {
+    const r = await asUser(U.owner, async (c) => ({
+      s: (await c.query("select public.finance_summary($1, '2027-02-05') s", [org])).rows[0].s,
+      soon: (await c.query("select id from public.search_receivables($1, null, 'vence_em_breve', null, null, '2027-02-05')", [org])).rowCount,
+    }));
+    expect(r.s.due_soon_count).toBe(1); // fevereiro vence em 10/02
+    expect(Number(r.s.due_soon_total)).toBe(986.5);
+    expect(r.soon).toBe(1);
+  });
+
   it("pesquisa cobranças por situação derivada (vencido / a vencer)", async () => {
     const r = await asUser(U.owner, async (c) => ({
       overdue: (await c.query("select id from public.search_receivables($1, null, 'vencido', null, null, '2027-02-20')", [org])).rowCount,

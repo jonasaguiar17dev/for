@@ -29,12 +29,12 @@ export function ForgotPasswordForm() {
   });
 
   return (
-    <form onSubmit={onSubmit} className="mt-8 grid gap-5" noValidate>
+    <form onSubmit={onSubmit} className="mt-8 grid gap-4" noValidate>
       {feedback && <Alert variant={feedback.ok ? "success" : "destructive"}>{feedback.text}</Alert>}
       <FormField id="email" label="E-mail" error={form.formState.errors.email?.message}>
         <Input type="email" autoComplete="email" {...form.register("email")} />
       </FormField>
-      <Button type="submit" size="lg" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending && <Loader2 className="animate-spin" />}
         Enviar link de recuperação
       </Button>

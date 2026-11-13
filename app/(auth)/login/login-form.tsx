@@ -30,7 +30,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
   });
 
   return (
-    <form onSubmit={onSubmit} className="mt-8 grid gap-5" noValidate>
+    <form onSubmit={onSubmit} className="mt-8 grid gap-4" noValidate>
       {error && <Alert variant="destructive">{error}</Alert>}
       <FormField id="email" label="E-mail" error={form.formState.errors.email?.message}>
         <Input type="email" autoComplete="email" placeholder="voce@empresa.com.br" {...form.register("email")} />
@@ -43,7 +43,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
           Esqueci minha senha
         </Link>
       </div>
-      <Button type="submit" size="lg" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending && <Loader2 className="animate-spin" />}
         Entrar
       </Button>

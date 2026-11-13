@@ -147,6 +147,7 @@ export type DashboardSummary = {
   total_companies: number;
   clients_by_status: Partial<Record<ContractStatus, number>>;
   companies_by_regime: Partial<Record<TaxRegime, number>>;
+  new_clients_by_month: { month: string; count: number }[];
   recent_clients: {
     company_id: string;
     corporate_name: string;
@@ -237,6 +238,8 @@ export type FinanceSummary = {
   open_count: number;
   overdue_total: number;
   overdue_count: number;
+  due_soon_total: number;
+  due_soon_count: number;
   month_billed: number;
   month_received: number;
   active_contracts: number;

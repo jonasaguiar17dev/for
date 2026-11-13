@@ -16,7 +16,7 @@ O módulo de Contabilidade (escrituração, DRE e Balanço) está apenas prepara
 | Camada | Tecnologia |
 | --- | --- |
 | Aplicação | Next.js 16 (App Router, Server Actions, `proxy.ts`), React 19, TypeScript |
-| Interface | Tailwind CSS 4, componentes no padrão shadcn/ui (Radix), Recharts, lucide-react |
+| Interface | Tailwind CSS 4, componentes no padrão shadcn/ui (Radix), Recharts, lucide-react, fontes Geist |
 | Formulários | React Hook Form + Zod (validação no cliente **e** no servidor) |
 | Backend | Supabase (PostgreSQL, Auth, Storage) com Row Level Security |
 | Testes | Vitest (unitários + integração do banco/RLS em PostgreSQL local) |
@@ -27,6 +27,7 @@ Documentação complementar:
 - [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) — modelo de dados, multiempresa, organização do código.
 - [`docs/SEGURANCA.md`](docs/SEGURANCA.md) — papéis, matriz de permissões, RLS, auditoria, documentos.
 - [`docs/FUNCIONALIDADES.md`](docs/FUNCIONALIDADES.md) — o que cada tela faz.
+- [`docs/DESIGN.md`](docs/DESIGN.md) — design system: tokens, tipografia, componentes e responsividade.
 
 ---
 
@@ -71,6 +72,7 @@ As migrations versionadas estão em `supabase/migrations/` e devem ser aplicadas
 | `20261106000400_rpc_functions.sql` | Funções de negócio (criar organização, salvar empresa, pesquisa, dashboard, acessos) |
 | `20261106000500_storage.sql` | Bucket privado `client-documents` e políticas do Storage |
 | `20261113000100_contracts_finance.sql` | Catálogo de serviços, contratos, itens, contas a receber, faturamento e indicadores financeiros |
+| `20261114000100_dashboard_trends.sql` | Indicadores de tendência (novos clientes por mês, vencimentos em 7 dias) — somente leitura |
 
 **Opção A — Supabase CLI (recomendado):**
 

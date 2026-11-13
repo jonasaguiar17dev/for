@@ -99,7 +99,7 @@ export default async function ContractPage({ params }: PageProps<"/contratos/[id
                 {c.adjustment_month ? ` · em ${MONTH_LABELS[c.adjustment_month - 1]}` : ""}
               </Item>
               <Item label="Mensalidade">
-                <span className="font-serif text-2xl font-semibold tabular-nums">{formatBRL(monthly)}</span>
+                <span className="num text-2xl font-semibold tracking-tight">{formatBRL(monthly)}</span>
               </Item>
               <Item label="Observações">
                 <span className="whitespace-pre-line">{c.notes}</span>
@@ -107,41 +107,56 @@ export default async function ContractPage({ params }: PageProps<"/contratos/[id
             </dl>
           </CardContent>
         </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader>
+        <Card className="overflow-hidden lg:col-span-2">
+          <CardHeader className="pb-4">
             <CardTitle>Serviços</CardTitle>
           </CardHeader>
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Descrição</TableHead>
-                <TableHead>Periodicidade</TableHead>
-                <TableHead className="text-right">Qtde</TableHead>
-                <TableHead className="text-right">Unitário</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((i) => (
-                <TableRow key={i.id}>
-                  <TableCell>{i.description}</TableCell>
-                  <TableCell>{BILLING_FREQUENCY_LABELS[i.billing_frequency]}</TableCell>
-                  <TableCell className="text-right tabular-nums">{i.quantity.toLocaleString("pt-BR")}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatBRL(i.unit_amount)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatBRL(sumItems([i]))}</TableCell>
+          <div className="hidden border-t border-border sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Periodicidade</TableHead>
+                  <TableHead className="text-right">Qtde</TableHead>
+                  <TableHead className="text-right">Unitário</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {items.map((i) => (
+                  <TableRow key={i.id}>
+                    <TableCell>{i.description}</TableCell>
+                    <TableCell className="text-muted-foreground">{BILLING_FREQUENCY_LABELS[i.billing_frequency]}</TableCell>
+                    <TableCell className="num text-right">{i.quantity.toLocaleString("pt-BR")}</TableCell>
+                    <TableCell className="num text-right">{formatBRL(i.unit_amount)}</TableCell>
+                    <TableCell className="num text-right font-medium">{formatBRL(sumItems([i]))}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <ul className="divide-y divide-border border-t border-border sm:hidden">
+            {items.map((i) => (
+              <li key={i.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm">{i.description}</p>
+                  <p className="num text-xs text-muted-foreground">
+                    {BILLING_FREQUENCY_LABELS[i.billing_frequency]} · {i.quantity.toLocaleString("pt-BR")} × {formatBRL(i.unit_amount)}
+                  </p>
+                </div>
+                <p className="num shrink-0 text-sm font-medium">{formatBRL(sumItems([i]))}</p>
+              </li>
+            ))}
+          </ul>
         </Card>
       </div>
 
-      <Card className="mt-6">
+      <Card className="mt-6 overflow-hidden">
         <CardHeader>
           <CardTitle>Cobranças deste contrato</CardTitle>
           <CardDescription>Geradas em Financeiro › Gerar faturamento.</CardDescription>
         </CardHeader>
-        <div className="mt-4 border-t">
+        <div className="mt-4 border-t border-border">
           <ReceivablesTable
             canWrite={canWrite}
             showCompany={false}

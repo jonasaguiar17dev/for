@@ -14,17 +14,20 @@ export function MobileNav({ organizationName }: { organizationName: string }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Abrir menu">
+        <Button variant="ghost" size="icon" className="-ml-2 lg:hidden" aria-label="Abrir menu">
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent className="bg-sidebar text-sidebar-foreground" aria-describedby={undefined}>
+      <SheetContent className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground" aria-describedby={undefined}>
         <SheetTitle className="sr-only">Menu</SheetTitle>
-        <div className="px-5 pt-6 pb-4">
+        <div className="flex h-16 items-center px-4">
           <Logo tone="light" />
-          <p className="mt-4 truncate text-xs text-sidebar-muted">{organizationName}</p>
         </div>
-        <div className="flex-1 overflow-y-auto px-3 pb-6">
+        <div className="mx-3 mb-3 rounded-lg border border-sidebar-border bg-sidebar-elevated px-3 py-2">
+          <p className="text-[10px] tracking-wide text-sidebar-muted uppercase">Organização</p>
+          <p className="truncate text-[13px] font-medium text-white">{organizationName}</p>
+        </div>
+        <div className="scroll-thin flex-1 overflow-y-auto px-3 pb-6">
           <SidebarNav onNavigate={() => setOpen(false)} />
         </div>
       </SheetContent>

@@ -19,14 +19,23 @@ export function Pagination({
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
   return (
-    <nav aria-label="Paginação" className="flex flex-col items-center justify-between gap-3 px-1 pt-4 text-sm sm:flex-row">
+    <nav aria-label="Paginação" className="flex flex-col items-center justify-between gap-3 py-3 text-[13px] sm:flex-row">
       <p className="text-muted-foreground">
-        {total === 0 ? "Nenhum registro" : `Exibindo ${from}–${to} de ${total.toLocaleString("pt-BR")}`}
+        {total === 0 ? (
+          "Nenhum registro"
+        ) : (
+          <>
+            <span className="num font-medium text-foreground">
+              {from}–{to}
+            </span>{" "}
+            de <span className="num font-medium text-foreground">{total.toLocaleString("pt-BR")}</span>
+          </>
+        )}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {page > 1 ? (
           <Button asChild variant="outline" size="sm">
-            <Link href={buildHref(page - 1)} rel="prev">
+            <Link href={buildHref(page - 1)} rel="prev" scroll={false}>
               <ChevronLeft /> Anterior
             </Link>
           </Button>
@@ -35,12 +44,12 @@ export function Pagination({
             <ChevronLeft /> Anterior
           </Button>
         )}
-        <span className="px-2 tabular-nums">
+        <span className="num px-2 text-muted-foreground">
           {page} / {pageCount}
         </span>
         {page < pageCount ? (
           <Button asChild variant="outline" size="sm">
-            <Link href={buildHref(page + 1)} rel="next">
+            <Link href={buildHref(page + 1)} rel="next" scroll={false}>
               Próxima <ChevronRight />
             </Link>
           </Button>

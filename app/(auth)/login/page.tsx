@@ -8,8 +8,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { next, erro } = await searchParams;
   return (
     <div>
-      <h1 className="font-serif text-3xl font-semibold">Entrar</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Acesse com seu e-mail corporativo e senha.</p>
+      <h1 className="text-2xl font-semibold tracking-tight">Entrar</h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">Acesse com seu e-mail corporativo e senha.</p>
       <LoginForm next={typeof next === "string" ? next : undefined} linkError={erro === "link"} />
     </div>
   );
